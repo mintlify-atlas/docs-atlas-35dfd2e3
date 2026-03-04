@@ -1,0 +1,97 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Miele-LXIV Easy",
+  "projectDescription": "A build system that configures the Miele-LXIV Xcode project and manages dependencies in 5 easy steps.",
+  "theme": "aspen",
+  "primaryColor": "#2563EB",
+  "lightColor": "#60A5FA",
+  "darkColor": "#1E40AF",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "prerequisites",
+              "installation"
+            ]
+          },
+          {
+            "group": "Setup Guide",
+            "pages": [
+              "setup/overview",
+              "setup/step1-configuration",
+              "setup/step2-download",
+              "setup/step3-build",
+              "setup/step4-symlinks",
+              "setup/step5-xcode"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/options",
+              "configuration/version-sets",
+              "configuration/directories"
+            ]
+          },
+          {
+            "group": "Dependencies",
+            "pages": [
+              "dependencies/overview",
+              "dependencies/dcmtk",
+              "dependencies/vtk-itk",
+              "dependencies/image-libraries",
+              "dependencies/opengl"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/patching",
+              "advanced/custom-versions",
+              "advanced/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Commands",
+            "pages": [
+              "reference/build-script",
+              "reference/reconfigure-script"
+            ]
+          },
+          {
+            "group": "Configuration Files",
+            "pages": [
+              "reference/kconfig",
+              "reference/version-sets",
+              "reference/seed-conf"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Interactive configuration using kconfig-mconf",
+    "Automated download of medical imaging libraries",
+    "Automated build and installation of dependencies",
+    "Support for multiple version sets (7.1.38, 7.3.46, 8.8)",
+    "Symbolic link management for Xcode project"
+  ],
+  "publicApiSurface": [
+    "./build.sh - Main build orchestration script",
+    "./reconfigure.sh - Interactive configuration script",
+    "./seed.sh - Initial setup script",
+    "Kconfig-miele - Main configuration menu",
+    "version-set-*.conf - Version configuration files"
+  ]
+}
