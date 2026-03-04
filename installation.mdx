@@ -1,0 +1,163 @@
+---
+title: Installation
+description: Download and set up Miele-LXIV Easy
+---
+
+This guide will help you download Miele-LXIV Easy and prepare your environment for configuring the Miele-LXIV Xcode project.
+
+## Download Miele-LXIV Easy
+
+Clone or download the Miele-LXIV Easy repository to your local machine:
+
+```bash
+git clone https://github.com/bettar/miele-lxiv-easy.git
+cd miele-lxiv-easy
+```
+
+<Note>
+The directory where you clone this repository becomes your `EASY_HOME` directory. All subsequent commands should be run from this location.
+</Note>
+
+## Understanding EASY_HOME
+
+`EASY_HOME` is the working directory for Miele-LXIV Easy. It contains:
+
+- **build.sh** - Main build script that orchestrates all operations
+- **reconfigure.sh** - Interactive configuration tool using kconfig-mconf
+- **Kconfig-miele** - Configuration menu definitions
+- **seed.conf** - Your initial configuration (created during first run)
+- **steps.conf** - Current step selections for the build process
+- **patch/** - Directory containing patches for DCMTK and OpenJPEG
+- **log/** - Directory for build logs (created automatically)
+
+## Initial Setup
+
+<Steps>
+  <Step title="Navigate to EASY_HOME">
+    ```bash
+    cd /path/to/miele-lxiv-easy
+    ```
+    
+    Replace `/path/to/miele-lxiv-easy` with the actual path where you cloned the repository.
+  </Step>
+  
+  <Step title="Define directory structure">
+    Before running the build script for the first time, decide where you want to store:
+    
+    - **SRC** - Sources directory (where library source code will be downloaded)
+    - **BLD** - Build directory (temporary location for intermediate build files)
+    - **BIN** - Install directory (where compiled libraries will be installed)
+    
+    You can accept the default suggestions or specify custom paths during the first run.
+  </Step>
+  
+  <Step title="Run the build script">
+    ```bash
+    ./build.sh
+    ```
+    
+    Since `seed.conf` doesn't exist yet, the script will launch the interactive configuration interface.
+  </Step>
+  
+  <Step title="Configure directories">
+    In the kconfig-mconf interface:
+    
+    1. Select or accept the default paths for SRC, BLD, and BIN directories
+    2. Choose your version set file (recommended: use the default)
+    3. Save your configuration
+    4. Exit the configuration interface
+    5. Exit again to return to the shell
+    
+    <Warning>
+    If you're new to Miele-LXIV Easy, it's strongly recommended to accept the default settings for a tried and tested setup.
+    </Warning>
+  </Step>
+  
+  <Step title="Verify configuration">
+    After the initial configuration, you should see:
+    
+    - `seed.conf` file created in EASY_HOME
+    - `log/` directory created for build logs
+    - Configuration summary displayed
+  </Step>
+</Steps>
+
+## Directory Structure Example
+
+After configuration, your setup might look like this:
+
+```
+~/projects/
+├── miele-lxiv-easy/          # EASY_HOME
+│   ├── build.sh
+│   ├── reconfigure.sh
+│   ├── seed.conf             # Created after first run
+│   ├── steps.conf
+│   └── log/
+├── sources/                   # SRC directory
+│   └── miele-easy-20260304_1234/
+│       ├── dcmtk-3.6.7/
+│       ├── VTK-9.2.6/
+│       └── ...
+├── build/                     # BLD directory
+│   └── miele-easy-20260304_1234/
+│       ├── dcmtk-3.6.7/
+│       └── ...
+└── install/                   # BIN directory
+    └── miele-easy-20260304_1234/
+        ├── dcmtk-3.6.7/
+        │   ├── include/
+        │   └── lib/
+        └── ...
+```
+
+<Note>
+The timestamp (e.g., `miele-easy-20260304_1234`) is automatically generated to organize different builds. You can share the SRC directory across projects, but BLD and BIN are typically timestamped.
+</Note>
+
+## What Gets Created
+
+During the initial setup, Miele-LXIV Easy creates:
+
+1. **seed.conf** - Contains your directory paths and version set configuration
+2. **TIMESTAMP** - Added to seed.conf to track your build
+3. **log/** directory - For storing build output and debugging information
+
+## Verification
+
+Verify your installation is ready:
+
+```bash
+# Check that seed.conf exists
+ls -la seed.conf
+
+# View your configuration
+cat seed.conf
+
+# Verify build script is executable
+ls -la build.sh
+```
+
+## Next Steps
+
+Now that Miele-LXIV Easy is installed and configured, you're ready to begin the setup process:
+
+<Card title="Setup Guide" icon="rocket" href="/setup">
+  Follow the 5-step process to configure your Miele-LXIV Xcode project
+</Card>
+
+<Card title="Configuration" icon="sliders" href="/configuration">
+  Learn about the configuration options available in kconfig-mconf
+</Card>
+
+## Troubleshooting
+
+<Warning>
+If the build script exits immediately with an error about missing tools, make sure you've installed all the [prerequisites](/prerequisites).
+</Warning>
+
+Common issues during installation:
+
+- **"kconfig-mconf not found"** - Install kconfig-mconf following the [prerequisites guide](/prerequisites)
+- **"cmake not found"** - Install the cmake command-line tool
+- **Permission errors** - Ensure you have write permissions to the SRC, BLD, and BIN directories

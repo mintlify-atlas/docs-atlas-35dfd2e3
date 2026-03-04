@@ -1,0 +1,596 @@
+---
+title: Version Set Files
+description: Reference for version set configuration files that define compatible package versions
+---
+
+## Overview
+
+Version set files define collections of third-party library versions that are known to work well together. Each file specifies exact versions for all dependencies in the build system.
+
+## File Naming Convention
+
+```
+version-set-<VTK_MAJOR>.<VTK_MINOR>.conf
+```
+
+The filename indicates the major.minor version of VTK included in that set:
+
+- `version-set-9.0.conf` - VTK 9.0.x
+- `version-set-8.8.conf` - VTK 8.8.x (also includes VTK 9.0.1)
+- `version-set-7.3.46.conf` - VTK 8.2.x (named after Miele version)
+- `version-set-7.1.38.conf` - VTK 7.1.x (named after Miele version)
+
+<Note>
+Earlier version sets are named after the Miele-LXIV version rather than VTK version.
+</Note>
+
+## File Location
+
+Version set files are:
+- **Stored**: In the build-steps directory alongside build scripts
+- **Referenced**: In `seed.conf` via the `CONFIG_VERSION_SET` variable
+- **Sourced**: By `build.sh` during the build process
+
+## Configuration in seed.conf
+
+```bash seed.conf
+CONFIG_VERSION_SET="version-set-8.8.conf"
+```
+
+This setting is configured through `seed.sh` interactive menu.
+
+## Version Set Variables
+
+Each version set file defines the following variables:
+
+### Build Configuration
+
+<ParamField path="MINUS_STD" type="string">
+  C++ standard to use (e.g., `gnu++17`, `gnu++14`)
+</ParamField>
+
+<ParamField path="DEPL_TARG" type="string">
+  macOS deployment target (e.g., `10.9`, `10.13`). If not set, auto-detected.
+</ParamField>
+
+<ParamField path="COMPILER_FLAGS" type="string">
+  Additional compiler flags to pass to all packages
+</ParamField>
+
+### DCMTK Configuration
+
+<ParamField path="DCMTK_MAJOR" type="integer">
+  DCMTK major version number
+</ParamField>
+
+<ParamField path="DCMTK_MINOR" type="integer">
+  DCMTK minor version number
+</ParamField>
+
+<ParamField path="DCMTK_BUILD" type="integer">
+  DCMTK patch/build version number
+</ParamField>
+
+<ParamField path="DCMTK_VERSION" type="string">
+  Full DCMTK version (constructed from major.minor.build)
+</ParamField>
+
+<ParamField path="DCMTK_OPTIONS" type="string">
+  CMake options for DCMTK configuration
+</ParamField>
+
+<ParamField path="DCMTK_CXX_FLAGS" type="string">
+  C++ preprocessor flags for DCMTK (e.g., `FOR_MIELE_LXIV`)
+</ParamField>
+
+### VTK Configuration
+
+<ParamField path="VTK_MAJOR" type="integer">
+  VTK major version number
+</ParamField>
+
+<ParamField path="VTK_MINOR" type="integer">
+  VTK minor version number
+</ParamField>
+
+<ParamField path="VTK_BUILD" type="integer">
+  VTK patch/build version number
+</ParamField>
+
+<ParamField path="VTK_VERSION" type="string">
+  Full VTK version (constructed from major.minor.build)
+</ParamField>
+
+<ParamField path="VTK_OPTIONS" type="string">
+  CMake options for VTK configuration
+</ParamField>
+
+### ITK Configuration
+
+<ParamField path="ITK_MAJOR" type="integer">
+  ITK major version number
+</ParamField>
+
+<ParamField path="ITK_MINOR" type="integer">
+  ITK minor version number
+</ParamField>
+
+<ParamField path="ITK_BUILD" type="integer">
+  ITK patch/build version number
+</ParamField>
+
+<ParamField path="ITK_VERSION" type="string">
+  Full ITK version (constructed from major.minor.build)
+</ParamField>
+
+### Supporting Libraries
+
+<ParamField path="ICONV_VERSION" type="string">
+  libiconv version (e.g., `1.15`)
+</ParamField>
+
+<ParamField path="XML2_VERSION" type="string">
+  libxml2 version (e.g., `2.9.13`)
+</ParamField>
+
+<ParamField path="ZLIB_VERSION" type="string">
+  zlib version (e.g., `1.3.1`)
+</ParamField>
+
+<ParamField path="OPENSSL_VERSION" type="string">
+  OpenSSL version (e.g., `1.1.1d`)
+</ParamField>
+
+<ParamField path="PNG_VERSION" type="string">
+  libpng version (e.g., `1.6.37`)
+</ParamField>
+
+<ParamField path="JPEG_VERSION" type="string">
+  libjpeg version (e.g., `9d`)
+</ParamField>
+
+<ParamField path="TIFF_VERSION" type="string">
+  libtiff version (e.g., `4.0.10`)
+</ParamField>
+
+### Image Format Libraries
+
+<ParamField path="OPENJPG_MAJOR" type="integer">
+  OpenJPEG major version number
+</ParamField>
+
+<ParamField path="OPENJPG_MINOR" type="integer">
+  OpenJPEG minor version number
+</ParamField>
+
+<ParamField path="OPENJPG_BUILD" type="integer">
+  OpenJPEG patch/build version number
+</ParamField>
+
+<ParamField path="OPENJPG_VERSION" type="string">
+  Full OpenJPEG version (constructed from major.minor.build)
+</ParamField>
+
+<ParamField path="OPENJPG_TAR" type="string">
+  OpenJPEG tarball version tag (e.g., `v2.3.1`)
+</ParamField>
+
+<ParamField path="JASPER_VERSION" type="string">
+  Jasper version (e.g., `2.0.32`)
+</ParamField>
+
+### Graphics Libraries
+
+<ParamField path="GLEW_VERSION" type="string">
+  GLEW version (e.g., `2.1.0`)
+</ParamField>
+
+<ParamField path="GLEW_OPTIONS" type="string">
+  CMake options for GLEW configuration
+</ParamField>
+
+<ParamField path="GLM_VERSION" type="string">
+  GLM version (e.g., `0.9.8.5`)
+</ParamField>
+
+### Application Version
+
+<ParamField path="MIELE_VERSION" type="string">
+  Miele-LXIV application version to build (e.g., `8.4.62`)
+</ParamField>
+
+## Example Version Sets
+
+<CodeGroup>
+
+```bash version-set-8.8.conf
+# To build latest GitHub app
+MINUS_STD=gnu++17
+
+# 2019-10-28
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=5
+DCMTK_VERSION=$DCMTK_MAJOR.$DCMTK_MINOR.$DCMTK_BUILD
+DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=ON -D DCMTK_WITH_ICONV=ON"
+DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+
+GLEW_VERSION=2.1.0
+GLEW_OPTIONS="-D BUILD_UTILS=ON -D BUILD_FRAMEWORK=ON"
+
+GLM_VERSION=0.9.8.5
+
+ICONV_VERSION=1.15
+XML2_VERSION=2.9.13
+ZLIB_VERSION=1.3.1
+
+ITK_MAJOR=5
+ITK_MINOR=1
+ITK_BUILD=1
+ITK_VERSION=$ITK_MAJOR.$ITK_MINOR.$ITK_BUILD
+
+JASPER_VERSION=2.0.32
+JPEG_VERSION=9d
+
+OPENJPG_MAJOR=2
+OPENJPG_MINOR=3
+OPENJPG_BUILD=1
+OPENJPG_TAR=v$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+OPENJPG_VERSION=$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+
+OPENSSL_VERSION=1.1.1d
+
+PNG_VERSION=1.6.37
+
+TIFF_VERSION=4.0.10
+
+#-------------------------------------------------------------------------------
+VTK_MAJOR=9
+VTK_MINOR=0
+VTK_BUILD=1
+VTK_VERSION=$VTK_MAJOR.$VTK_MINOR.$VTK_BUILD
+VTK_OPTIONS="-D VTK_RENDERING_BACKEND:STRING=OpenGL2"
+#VTK_TIFF 4.0.9
+#VTK_JPEG 8d  15-Jan-2012
+
+#-------------------------------------------------------------------------------
+MIELE_VERSION=8.4.62
+```
+
+```bash version-set-7.3.46.conf
+# To build latest GitHub app
+MINUS_STD=gnu++14
+DEPL_TARG=10.9
+
+# 2017-07-14
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=4
+DCMTK_VERSION=$DCMTK_MAJOR.$DCMTK_MINOR.$DCMTK_BUILD
+DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=ON -D DCMTK_WITH_ICONV=ON -D WITH_OPENSSLINC=ON -D OPENSSL_VERSION_CHECK=ON"
+DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+
+GLEW_VERSION=2.1.0
+GLEW_OPTIONS="-D BUILD_UTILS=ON -D BUILD_FRAMEWORK=ON"
+
+GLM_VERSION=0.9.8.5
+
+ITK_MAJOR=4
+ITK_MINOR=13
+ITK_BUILD=2
+ITK_VERSION=$ITK_MAJOR.$ITK_MINOR.$ITK_BUILD
+
+JASPER_VERSION=2.0.12
+JPEG_VERSION=9b
+
+OPENJPG_MAJOR=2
+OPENJPG_MINOR=2
+OPENJPG_BUILD=0
+OPENJPG_TAR=v$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+OPENJPG_VERSION=$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+
+TIFF_VERSION=4.0.10
+
+#-------------------------------------------------------------------------------
+VTK_MAJOR=8
+VTK_MINOR=2
+VTK_BUILD=0
+VTK_VERSION=$VTK_MAJOR.$VTK_MINOR.$VTK_BUILD
+VTK_OPTIONS="-D VTK_RENDERING_BACKEND:STRING=OpenGL2"
+#VTK_TIFF 4.0.9
+#VTK_JPEG 8d  15-Jan-2012
+
+#-------------------------------------------------------------------------------
+ZLIB_VERSION=1.2.11
+
+#-------------------------------------------------------------------------------
+PNG_VERSION=1.6.35
+
+#-------------------------------------------------------------------------------
+ICONV_VERSION=1.15
+
+#-------------------------------------------------------------------------------
+OPENSSL_VERSION=1.1.0j
+
+#-------------------------------------------------------------------------------
+MIELE_VERSION=7.3.46
+```
+
+```bash version-set-7.1.38.conf
+# To build latest GitHub app
+MINUS_STD=gnu++14
+DEPL_TARG=10.9
+
+# 2017-07-14
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=2  # 1 doesn't exist
+DCMTK_VERSION=$DCMTK_MAJOR.$DCMTK_MINOR.$DCMTK_BUILD
+DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=OFF -D WITH_OPENSSLINC=OFF -D OPENSSL_VERSION_CHECK=OFF -D DCMTK_WITH_ICONV=OFF"
+DCMTK_CXX_FLAGS=FOR_OSIRI_LXIV
+
+GLEW_VERSION=2.1.0
+GLEW_OPTIONS="-D BUILD_UTILS=ON -D BUILD_FRAMEWORK=ON"
+
+GLM_VERSION=0.9.8.5
+
+ITK_MAJOR=4
+ITK_MINOR=11
+ITK_BUILD=1
+ITK_VERSION=$ITK_MAJOR.$ITK_MINOR.$ITK_BUILD
+
+JASPER_VERSION=2.0.12
+JPEG_VERSION=9b
+
+OPENJPG_MAJOR=2
+OPENJPG_MINOR=2
+OPENJPG_BUILD=0
+OPENJPG_TAR=v$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+OPENJPG_VERSION=$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+
+TIFF_VERSION=4.0.8
+
+#-------------------------------------------------------------------------------
+VTK_MAJOR=7
+VTK_MINOR=1
+VTK_BUILD=1
+VTK_VERSION=$VTK_MAJOR.$VTK_MINOR.$VTK_BUILD
+VTK_OPTIONS="-D VTK_RENDERING_BACKEND:STRING=OpenGL2"
+#VTK_TIFF 4.0.6
+#VTK_JPEG 6b 27-Mar-1998
+
+#-------------------------------------------------------------------------------
+ZLIB_VERSION=1.2.11
+
+#-------------------------------------------------------------------------------
+PNG_VERSION=1.6.30
+
+#-------------------------------------------------------------------------------
+ICONV_VERSION=1.15
+
+#-------------------------------------------------------------------------------
+OPENSSL_VERSION=1.1.0f
+
+#-------------------------------------------------------------------------------
+MIELE_VERSION=7.1.38
+```
+
+</CodeGroup>
+
+## Version Compatibility
+
+### VTK 9.x Series (version-set-8.8.conf)
+
+- **VTK**: 9.0.1
+- **ITK**: 5.1.1
+- **DCMTK**: 3.6.5
+- **OpenSSL**: 1.1.1d
+- **C++ Standard**: gnu++17
+- **Target**: Latest macOS (auto-detected)
+
+### VTK 8.x Series (version-set-7.3.46.conf)
+
+- **VTK**: 8.2.0
+- **ITK**: 4.13.2
+- **DCMTK**: 3.6.4
+- **OpenSSL**: 1.1.0j
+- **C++ Standard**: gnu++14
+- **Target**: macOS 10.9+
+
+### VTK 7.x Series (version-set-7.1.38.conf)
+
+- **VTK**: 7.1.1
+- **ITK**: 4.11.1
+- **DCMTK**: 3.6.2
+- **OpenSSL**: 1.1.0f (disabled)
+- **C++ Standard**: gnu++14
+- **Target**: macOS 10.9+
+
+<Note>
+The 7.1.38 version set builds DCMTK without OpenSSL and iconv support.
+</Note>
+
+## Creating a New Version Set
+
+To create a custom version set:
+
+### 1. Copy Existing Version Set
+
+```bash
+cp version-set-8.8.conf version-set-custom.conf
+```
+
+### 2. Update Version Numbers
+
+Modify the version variables for the packages you want to change:
+
+```bash
+# Example: Update to VTK 9.1.0
+VTK_MAJOR=9
+VTK_MINOR=1
+VTK_BUILD=0
+VTK_VERSION=$VTK_MAJOR.$VTK_MINOR.$VTK_BUILD
+
+# Example: Update to DCMTK 3.6.6
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=6
+DCMTK_VERSION=$DCMTK_MAJOR.$DCMTK_MINOR.$DCMTK_BUILD
+```
+
+### 3. Adjust Build Options
+
+Modify CMake options if needed:
+
+```bash
+# Example: Change VTK rendering backend
+VTK_OPTIONS="-D VTK_RENDERING_BACKEND:STRING=OpenGL"
+
+# Example: Disable OpenSSL in DCMTK
+DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=OFF -D DCMTK_WITH_ICONV=ON"
+```
+
+### 4. Update seed.conf
+
+Edit `seed.conf` or re-run `seed.sh` to select your new version set:
+
+```bash
+CONFIG_VERSION_SET="version-set-custom.conf"
+```
+
+### 5. Test the Build
+
+Run the build and verify all packages compile successfully:
+
+```bash
+./build.sh
+```
+
+## Version Variables Usage
+
+The build script constructs package names from version variables:
+
+```bash build.sh:42-56
+DCMTK=dcmtk-$DCMTK_VERSION
+GLEW=glew-$GLEW_VERSION
+GLM=glm-$GLM_VERSION
+ICONV=libiconv-$ICONV_VERSION
+ITK=InsightToolkit-$ITK_VERSION
+JASPER=jasper-$JASPER_VERSION
+JPEG=jpeg-$JPEG_VERSION
+OPENJPG=openjpeg-$OPENJPG_VERSION
+OPENSSL=openssl-$OPENSSL_VERSION
+PNG=libpng-$PNG_VERSION
+TIFF=tiff-$TIFF_VERSION
+VTK=VTK-$VTK_VERSION
+ZLIB=zlib-$ZLIB_VERSION
+XML2=libxml2-v$XML2_VERSION # 'v' since 2.9.13
+MIELE=$APP-$MIELE_VERSION
+```
+
+These are then used to construct source, build, and install paths:
+
+```bash build.sh:65-79
+SRC_DCMTK=$SRC_P/$DCMTK  # patched
+SRC_GLEW=$SRC/$GLEW
+SRC_GLM=$SRC/$GLM
+# ... etc
+
+BLD_DCMTK=$BLD/$DCMTK
+BLD_GLEW=$BLD/$GLEW
+# ... etc
+
+BIN_DCMTK=$BIN/$DCMTK
+BIN_GLEW=$BIN/$GLEW
+# ... etc
+```
+
+## Special Version Variables
+
+### DCMTK Page Variable
+
+```bash build.sh:124-125
+DCMTK_PAGE=dcmtk${DCMTK_MAJOR}${DCMTK_MINOR}${DCMTK_BUILD}
+DCMTK_PAGE_367=dcmtk367
+```
+
+Used to construct download URLs:
+
+```bash build.sh:526
+wget "https://dicom.offis.de/download/dcmtk/$DCMTK_PAGE/$DCMTK.tar.gz"
+```
+
+### OpenJPEG Tar Variable
+
+```bash
+OPENJPG_TAR=v$OPENJPG_MAJOR.$OPENJPG_MINOR.$OPENJPG_BUILD
+```
+
+OpenJPEG GitHub releases use a `v` prefix:
+
+```bash build.sh:637
+wget https://github.com/uclouvain/openjpeg/archive/$OPENJPG_TAR.tar.gz
+```
+
+### XML2 Version Variable
+
+```bash build.sh:55
+XML2=libxml2-v$XML2_VERSION # 'v' since 2.9.13
+```
+
+Libxml2 added a `v` prefix in version 2.9.13.
+
+## Best Practices
+
+### Version Selection
+
+1. **Use tested combinations** - Start with an existing version set
+2. **Update incrementally** - Change one package at a time
+3. **Test thoroughly** - Build and run the application
+4. **Document changes** - Add comments explaining version choices
+
+### Compatibility Notes
+
+1. **VTK/ITK compatibility** - ITK must support your VTK version
+2. **DCMTK/OpenSSL** - Ensure OpenSSL version is compatible
+3. **C++ standard** - All packages must support the same standard
+4. **macOS version** - Deployment target must match system capabilities
+
+### Maintenance
+
+1. **Keep version sets** - Don't delete old sets; they're small files
+2. **Name clearly** - Use descriptive names
+3. **Add comments** - Document release dates and compatibility
+
+## Troubleshooting
+
+### Version Not Found
+
+If a version doesn't exist:
+
+1. Check package release pages
+2. Try nearby versions (e.g., 2.0.32 instead of 2.0.31)
+3. Update download URLs if needed
+
+### Incompatible Versions
+
+If packages don't work together:
+
+1. Check package release notes
+2. Look for version compatibility matrices
+3. Try versions from a working set
+
+### Build Failures
+
+If compilation fails:
+
+1. Check compiler flags (`MINUS_STD`)
+2. Verify deployment target
+3. Review CMake options
+4. Check for missing dependencies
+
+## See Also
+
+- [build.sh Reference](/reference/build-script) - How versions are used
+- [seed.conf Reference](/reference/seed-conf) - How to select version sets
+- [Kconfig Configuration](/reference/kconfig) - Configuration file format

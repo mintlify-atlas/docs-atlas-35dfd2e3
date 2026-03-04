@@ -1,0 +1,573 @@
+---
+title: Kconfig Configuration
+description: Reference for the Kconfig menu structure and configuration file format
+---
+
+## Overview
+
+The Miele-LXIV build system uses Kconfig (the same configuration system used by the Linux kernel) to manage build options. The configuration is defined in two files:
+
+- **`Kconfig-miele`** - Build step configuration (used by `reconfigure.sh`)
+- **`Kconfig-seed`** - Initial setup configuration (used by `seed.sh`)
+
+These files define the menu structure shown in the interactive `kconfig-mconf` interface.
+
+## Kconfig Language
+
+### Basic Syntax
+
+```kconfig
+config OPTION_NAME
+    bool "Menu label"
+    default y
+    ---help---
+        Help text describing this option.
+```
+
+### Configuration Types
+
+<ParamField path="bool" type="type">
+  Boolean option (yes/no, on/off). Displayed as checkbox `[ ]` or `[*]`.
+</ParamField>
+
+<ParamField path="string" type="type">
+  String value. User can enter text.
+</ParamField>
+
+<ParamField path="choice" type="type">
+  Exclusive selection. Only one option in the group can be selected.
+</ParamField>
+
+### Menu Structure
+
+```kconfig
+mainmenu "Main menu title"
+
+config OPTION
+    bool "Option label"
+
+if OPTION
+menu "Submenu title"
+
+config SUBOPTION
+    bool "Suboption label"
+    
+endmenu
+endif
+```
+
+## Kconfig-miele Structure
+
+Defines the build steps menu used by `reconfigure.sh`.
+
+### Main Menu
+
+```kconfig Kconfig-miele:1
+mainmenu "Miele-LXIV - 3rd Party Modules Configuration"
+```
+
+### Download Section
+
+```kconfig Kconfig-miele:4-84
+config DOWNLOAD
+    bool "Download sources"
+    default n
+    ---help---
+        Also apply available patches.
+
+if DOWNLOAD
+menu "download modules"
+
+config DOWNLOAD_SOURCES_OPENSSL
+    bool "OpenSSL"
+    default y
+
+config DOWNLOAD_LIB_ICONV
+    bool "iconv"
+    default y
+
+# ... more download options ...
+
+config DOWNLOAD_SOURCES_DCMTK
+    bool "DCMTK"
+    default y
+    
+config PATCH_DCMTK
+    bool "patch DCMTK"
+    default y
+    depends on DOWNLOAD_SOURCES_DCMTK
+
+endmenu
+endif # DOWNLOAD
+```
+
+Key features:
+- Top-level `DOWNLOAD` option enables the entire section
+- Submenu contains individual package download options
+- `PATCH_DCMTK` depends on `DOWNLOAD_SOURCES_DCMTK`
+- All options default to `y` (enabled) except the top-level
+
+### Info Section
+
+Controls version information display:
+
+```kconfig Kconfig-miele:87-139
+config INFO
+    bool "Show version information"
+    default n
+
+if INFO
+menu "Info modules"
+
+config INFO_ICONV
+    bool "ICONV"
+    default y
+
+config INFO_PNG
+    bool "PNG"
+    default y
+
+# ... more info options ...
+
+endmenu
+endif
+```
+
+### Configure Section
+
+Controls which packages to configure:
+
+```kconfig Kconfig-miele:142-204
+config CONFIGURE
+    bool "Configure"
+    default y
+
+if CONFIGURE
+menu "Configure modules"
+
+config CONFIGURE_LIB_ICONV
+    bool "lib ICONV"
+    default y
+
+config CONFIGURE_VTK
+    bool "VTK"
+    default y
+    
+config CONFIGURE_ITK
+    bool "ITK"
+    default y
+
+config CONFIGURE_DCMTK
+    bool "DCMTK"
+    default y
+
+# ... more configure options ...
+
+endmenu
+endif
+```
+
+### Build Section
+
+Controls compilation and installation:
+
+```kconfig Kconfig-miele:208-280
+config BUILD
+    bool "Build"
+    default y
+    
+if BUILD
+menu "Build modules"
+
+config COMPILE_VTK
+    bool "Build VTK"
+    default y
+
+config COLLAPSE_VTK
+    bool "Single VTK library"
+    default y
+    depends on COMPILE_VTK
+
+config BUILD_ITK
+    bool "Build ITK"
+    default y
+
+config COLLAPSE_ITK
+    bool "Single ITK library"
+    default y
+    depends on BUILD_ITK
+
+config COMPILE_DCMTK
+    bool "Build DCMTK"
+    default y
+
+# ... more build options ...
+
+endmenu
+endif
+```
+
+Notable features:
+- `COLLAPSE_VTK` depends on `COMPILE_VTK`
+- Collapse options combine multiple `.a` files into single library
+
+### Install Section
+
+```kconfig Kconfig-miele:283-314
+config INSTALL
+    bool "Install"
+    default y
+    
+if INSTALL
+menu "Install modules"
+
+config INSTALL_DCMTK
+    bool "Install DCMTK"
+    default y
+
+config POST_INSTALL_DCMTK
+    bool "Post-Processing installed DCMTK"
+    default y
+    depends on INSTALL_DCMTK
+    ---help---
+        Do this once, when new sources are updated.
+        
+config COLLAPSE_DCMTK
+    bool "Single DCMTK library"
+    default y
+    depends on INSTALL_DCMTK
+
+endmenu
+endif
+```
+
+### Symbolic Links Section
+
+```kconfig Kconfig-miele:317-390
+config REMOVE_SYMLINKS
+    bool "Remove Symbolic links"
+    default n
+
+config CREATE_SYMLINKS
+    bool "Create Symbolic links"
+    default n
+    
+if CREATE_SYMLINKS
+menu "Create symlinks"
+
+config UNZIP_BINARIES
+    bool "Unzip binaries"
+    default y
+    
+config CREATE_SYMLINKS_JPEG
+    bool "JPEG"
+    default y
+    
+config CREATE_SYMLINKS_VTK
+    bool "VTK"
+    default y
+
+# ... more symlink options ...
+
+endmenu
+endif
+```
+
+## Kconfig-seed Structure
+
+Defines initial configuration options used by `seed.sh`.
+
+### Version Set Configuration
+
+```kconfig Kconfig-seed:4-10
+config VERSION_SET
+    string "version numbers"
+    default "version-set-8.8.conf"
+    ---help---
+        Specify a set of version numbers which are known to work well together.
+        The number in the filename is the version number of the VTK package
+```
+
+This string option lets users select which version set file to use.
+
+### Directory Configuration
+
+```kconfig Kconfig-seed:12-23
+config SRC_DIR
+    string "sources directory"
+    default "~/Downloads/source"
+    
+config BLD_DIR
+    string "build directory"
+    default "~/Documents/temp/build"
+
+config BIN_DIR
+    string "install directory"
+    default "~/Applications"
+```
+
+String options for directory paths. Tilde (`~`) is expanded by the build script.
+
+### Generator Selection
+
+```kconfig Kconfig-seed:25-35
+choice
+    prompt "CMake generator"
+    default GENERATOR_MK
+    
+config GENERATOR_MK
+    bool "makefiles"
+
+config GENERATOR_XC
+    bool "Xcode"
+    
+endchoice
+```
+
+Exclusive choice between two CMake generators:
+- `GENERATOR_MK` - Unix Makefiles (default)
+- `GENERATOR_XC` - Xcode projects
+
+### Shared Sources Option
+
+```kconfig Kconfig-seed:37-44
+config SHARED_SOURCES
+    bool "Reuse available sources"
+    default n
+    ---help---
+        For modules that do not require patching, place them in
+        a shared parent directory, to avoid downloading them again.
+```
+
+## Configuration File Output
+
+### steps.conf Format
+
+Generated by `reconfigure.sh` (via `kconfig-mconf Kconfig-miele`):
+
+```bash
+#
+# Automatically generated file; DO NOT EDIT.
+# Miele-LXIV - 3rd Party Modules Configuration
+#
+
+#
+# Download sources
+#
+STEP_DOWNLOAD=y
+STEP_DOWNLOAD_SOURCES_OPENSSL=y
+STEP_DOWNLOAD_LIB_ICONV=y
+STEP_DOWNLOAD_SOURCES_DCMTK=y
+STEP_PATCH_DCMTK=y
+
+#
+# Info modules
+#
+# STEP_INFO is not set
+
+#
+# Configure modules
+#
+STEP_CONFIGURE=y
+STEP_CONFIGURE_LIB_ICONV=y
+STEP_CONFIGURE_VTK=y
+STEP_CONFIGURE_ITK=y
+STEP_CONFIGURE_DCMTK=y
+
+#
+# Build modules
+#
+STEP_BUILD=y
+STEP_COMPILE_VTK=y
+STEP_COLLAPSE_VTK=y
+STEP_BUILD_ITK=y
+STEP_COLLAPSE_ITK=y
+STEP_COMPILE_DCMTK=y
+
+#
+# Install modules
+#
+STEP_INSTALL=y
+STEP_INSTALL_DCMTK=y
+STEP_POST_INSTALL_DCMTK=y
+STEP_COLLAPSE_DCMTK=y
+
+# STEP_REMOVE_SYMLINKS is not set
+
+#
+# Create symlinks
+#
+STEP_CREATE_SYMLINKS=y
+STEP_UNZIP_BINARIES=y
+STEP_CREATE_SYMLINKS_VTK=y
+STEP_CREATE_SYMLINKS_ITK=y
+STEP_CREATE_SYMLINKS_DCMTK=y
+```
+
+### seed.conf Format
+
+Generated by `seed.sh` (via `kconfig-mconf Kconfig-seed`):
+
+```bash
+#
+# Automatically generated file; DO NOT EDIT.
+# Miele-LXIV - Once-only configuration
+#
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/Downloads/source"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+CONFIG_GENERATOR_MK=y
+# CONFIG_GENERATOR_XC is not set
+# CONFIG_SHARED_SOURCES is not set
+TIMESTAMP=miele-easy-20210615_1423
+```
+
+Key differences from `steps.conf`:
+- Uses `CONFIG_` prefix instead of `STEP_`
+- Contains string values in quotes
+- Includes timestamp appended by `build.sh`
+
+## Variable Naming Convention
+
+### In Kconfig Files
+
+Variable names in Kconfig files do NOT include the prefix:
+
+```kconfig
+config DOWNLOAD_SOURCES_VTK
+    bool "VTK"
+```
+
+### In Configuration Output
+
+The prefix is added automatically based on the `CONFIG_` environment variable:
+
+- `reconfigure.sh` sets `CONFIG_=STEP_` → variables become `STEP_DOWNLOAD_SOURCES_VTK`
+- `seed.sh` sets `CONFIG_=CONFIG_` → variables become `CONFIG_DOWNLOAD_SOURCES_VTK`
+
+### In build.sh
+
+The build script checks variables with their full prefix:
+
+```bash
+if [ $STEP_DOWNLOAD_SOURCES_VTK ] ; then
+    # download VTK
+fi
+
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP
+fi
+```
+
+## Dependencies and Conditionals
+
+### Simple Dependency
+
+```kconfig
+config PATCH_DCMTK
+    bool "patch DCMTK"
+    default y
+    depends on DOWNLOAD_SOURCES_DCMTK
+```
+
+The `PATCH_DCMTK` option is only visible/available if `DOWNLOAD_SOURCES_DCMTK` is enabled.
+
+### Conditional Sections
+
+```kconfig
+config BUILD
+    bool "Build"
+    default y
+    
+if BUILD
+menu "Build modules"
+# ... options only shown if BUILD is enabled ...
+endmenu
+endif
+```
+
+Entire menu sections can be conditional.
+
+### Choice Groups
+
+```kconfig
+choice
+    prompt "CMake generator"
+    default GENERATOR_MK
+    
+config GENERATOR_MK
+    bool "makefiles"
+
+config GENERATOR_XC
+    bool "Xcode"
+    
+endchoice
+```
+
+Only one option in a choice group can be selected at a time.
+
+## Help Text
+
+Help text is displayed when the user presses `?` on a menu option:
+
+```kconfig
+config POST_INSTALL_DCMTK
+    bool "Post-Processing installed DCMTK"
+    default y
+    depends on INSTALL_DCMTK
+    ---help---
+        Do this once, when new sources are updated.
+```
+
+Help text should:
+- Explain what the option does
+- Mention when to enable/disable it
+- Note any important side effects
+
+## Advanced Kconfig Features
+
+While not currently used in Miele-LXIV, Kconfig supports:
+
+- **tristate** - Three-state values (y/n/m)
+- **int** - Integer values
+- **hex** - Hexadecimal values
+- **range** - Restrict numeric values
+- **select** - Force other options to be enabled
+- **imply** - Suggest other options should be enabled
+- Complex boolean expressions in `depends on`
+
+## Modifying Menu Structure
+
+To add a new build step:
+
+1. Edit `Kconfig-miele`
+2. Add new option in appropriate section:
+
+```kconfig
+config DOWNLOAD_SOURCES_NEWLIB
+    bool "NewLib"
+    default y
+```
+
+3. Add corresponding configure/build/install options
+4. Run `./reconfigure.sh` to regenerate `steps.conf`
+5. Modify `build.sh` to handle the new `STEP_DOWNLOAD_SOURCES_NEWLIB` variable
+
+## Configuration File Compatibility
+
+Kconfig configuration files are:
+
+- **Shell-compatible** - Can be sourced with `source` or `.`
+- **Comment-preserving** - Comments indicate disabled options
+- **Regenerable** - Can be recreated by running `kconfig-mconf` again
+- **Mergeable** - Can manually merge changes if needed
+
+## See Also
+
+- [reconfigure.sh Reference](/reference/reconfigure-script) - How to use the menu interface
+- [seed.conf Reference](/reference/seed-conf) - Initial configuration details
+- [build.sh Reference](/reference/build-script) - How configuration is used in builds
+- [Version Sets](/reference/version-sets) - Package version configuration

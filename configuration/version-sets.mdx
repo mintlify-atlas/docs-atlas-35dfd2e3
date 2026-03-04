@@ -1,0 +1,349 @@
+---
+title: Version Sets
+description: Predefined library version configurations for different Miele-LXIV releases
+---
+
+Version sets are predefined configuration files that specify exact versions of all third-party libraries needed to build a specific release of Miele-LXIV. They ensure compatibility and reproducible builds.
+
+## What are Version Sets?
+
+A version set is a configuration file (`.conf`) that defines:
+
+- Library version numbers for all dependencies
+- Build configuration flags (C++ standard, deployment target)
+- CMake options for specific toolkits
+- Compiler flags and preprocessor definitions
+
+Using version sets ensures that all components are built with compatible versions that have been tested together.
+
+## Available Version Sets
+
+Miele-LXIV Easy provides three predefined version sets:
+
+<CardGroup cols={3}>
+  <Card title="Version 7.1.38" icon="1" href="#version-7138">
+    Legacy version with VTK 7.1, ITK 4.11, DCMTK 3.6.2
+  </Card>
+  <Card title="Version 7.3.46" icon="2" href="#version-7346">
+    Updated version with VTK 8.2, ITK 4.13, DCMTK 3.6.4
+  </Card>
+  <Card title="Version 8.8" icon="3" href="#version-88">
+    Latest version with VTK 9.0, ITK 5.1, DCMTK 3.6.5
+  </Card>
+</CardGroup>
+
+---
+
+## Version Set Comparison
+
+<Tabs>
+  <Tab title="7.1.38">
+    ### Version Set 7.1.38
+
+    This is the legacy version set for Miele-LXIV 7.1.38.
+
+    **Build Configuration:**
+    ```bash
+    C++ Standard: gnu++14
+    Deployment Target: macOS 10.9
+    Miele Version: 7.1.38
+    ```
+
+    **Major Library Versions:**
+
+    | Library | Version | Notes |
+    |---------|---------|-------|
+    | **VTK** | 7.1.1 | OpenGL2 rendering backend |
+    | **ITK** | 4.11.1 | |
+    | **DCMTK** | 3.6.2 | OpenSSL and iconv disabled |
+    | **OpenSSL** | 1.1.0f | |
+    | **OpenJPEG** | 2.2.0 | |
+    | **Jasper** | 2.0.12 | |
+    | **JPEG** | 9b | |
+    | **TIFF** | 4.0.8 | |
+    | **PNG** | 1.6.30 | |
+    | **zlib** | 1.2.11 | |
+    | **libiconv** | 1.15 | |
+    | **GLEW** | 2.1.0 | |
+    | **GLM** | 0.9.8.5 | |
+
+    **DCMTK Configuration:**
+    ```bash
+    DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=OFF \
+                   -D WITH_OPENSSLINC=OFF \
+                   -D OPENSSL_VERSION_CHECK=OFF \
+                   -D DCMTK_WITH_ICONV=OFF"
+    DCMTK_CXX_FLAGS=FOR_OSIRI_LXIV
+    ```
+
+    <Note>
+      This version set disables OpenSSL and iconv support in DCMTK for compatibility with older OsiriX-based code.
+    </Note>
+  </Tab>
+
+  <Tab title="7.3.46">
+    ### Version Set 7.3.46
+
+    Updated version set for Miele-LXIV 7.3.46 with modernized toolkits.
+
+    **Build Configuration:**
+    ```bash
+    C++ Standard: gnu++14
+    Deployment Target: macOS 10.9
+    Miele Version: 7.3.46
+    ```
+
+    **Major Library Versions:**
+
+    | Library | Version | Changes from 7.1.38 |
+    |---------|---------|---------------------|
+    | **VTK** | 8.2.0 | ⬆️ Major update from 7.1.1 |
+    | **ITK** | 4.13.2 | ⬆️ Updated from 4.11.1 |
+    | **DCMTK** | 3.6.4 | ⬆️ Updated from 3.6.2 |
+    | **OpenSSL** | 1.1.0j | ⬆️ Updated from 1.1.0f |
+    | **OpenJPEG** | 2.2.0 | ➖ No change |
+    | **Jasper** | 2.0.12 | ➖ No change |
+    | **JPEG** | 9b | ➖ No change |
+    | **TIFF** | 4.0.10 | ⬆️ Updated from 4.0.8 |
+    | **PNG** | 1.6.35 | ⬆️ Updated from 1.6.30 |
+    | **zlib** | 1.2.11 | ➖ No change |
+    | **libiconv** | 1.15 | ➖ No change |
+    | **GLEW** | 2.1.0 | ➖ No change |
+    | **GLM** | 0.9.8.5 | ➖ No change |
+
+    **DCMTK Configuration:**
+    ```bash
+    DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=ON \
+                   -D DCMTK_WITH_ICONV=ON \
+                   -D WITH_OPENSSLINC=ON \
+                   -D OPENSSL_VERSION_CHECK=ON"
+    DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+    ```
+
+    <Note>
+      This version enables OpenSSL and iconv support in DCMTK, allowing secure DICOM networking.
+    </Note>
+  </Tab>
+
+  <Tab title="8.8">
+    ### Version Set 8.8
+
+    Latest version set for Miele-LXIV 8.4.62+ with modern C++17 and latest toolkits.
+
+    **Build Configuration:**
+    ```bash
+    C++ Standard: gnu++17
+    Deployment Target: Dynamic (based on macOS version)
+    Miele Version: 8.4.62
+    ```
+
+    **Major Library Versions:**
+
+    | Library | Version | Changes from 7.3.46 |
+    |---------|---------|---------------------|
+    | **VTK** | 9.0.1 | ⬆️ Major update from 8.2.0 |
+    | **ITK** | 5.1.1 | ⬆️ Major update from 4.13.2 |
+    | **DCMTK** | 3.6.5 | ⬆️ Updated from 3.6.4 |
+    | **OpenSSL** | 1.1.1d | ⬆️ Updated from 1.1.0j |
+    | **OpenJPEG** | 2.3.1 | ⬆️ Updated from 2.2.0 |
+    | **Jasper** | 2.0.32 | ⬆️ Updated from 2.0.12 |
+    | **JPEG** | 9d | ⬆️ Updated from 9b |
+    | **TIFF** | 4.0.10 | ➖ No change |
+    | **PNG** | 1.6.37 | ⬆️ Updated from 1.6.35 |
+    | **zlib** | 1.3.1 | ⬆️ Major update from 1.2.11 |
+    | **libiconv** | 1.15 | ➖ No change |
+    | **libxml2** | 2.9.13 | ✨ Explicitly specified |
+    | **GLEW** | 2.1.0 | ➖ No change |
+    | **GLM** | 0.9.8.5 | ➖ No change |
+
+    **DCMTK Configuration:**
+    ```bash
+    DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=ON \
+                   -D DCMTK_WITH_ICONV=ON"
+    DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+    ```
+
+    <Note>
+      This version uses C++17 features and includes significant updates to VTK (v9) and ITK (v5).
+    </Note>
+  </Tab>
+</Tabs>
+
+---
+
+## Using Version Sets
+
+Version sets are configured during the initial setup in **STEP 1** of the build process.
+
+### Selecting a Version Set
+
+1. Run the configuration script:
+   ```bash
+   ./build.sh
+   ```
+
+2. On first run, the seed configuration menu appears
+3. Select the appropriate version set file:
+   - `version-set-7.1.38.conf`
+   - `version-set-7.3.46.conf`
+   - `version-set-8.8.conf`
+
+4. The selected version set is saved in `seed.conf`
+
+<Note>
+  The version set selection is typically done once. To change version sets, you need to remove `seed.conf` and re-run `./build.sh`.
+</Note>
+
+### Version Set Structure
+
+Each version set file follows this structure:
+
+```bash version-set-example.conf
+# Build configuration
+MINUS_STD=gnu++17
+DEPL_TARG=10.9
+
+# DCMTK configuration
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=5
+DCMTK_VERSION=$DCMTK_MAJOR.$DCMTK_MINOR.$DCMTK_BUILD
+DCMTK_OPTIONS="-D DCMTK_WITH_OPENSSL=ON -D DCMTK_WITH_ICONV=ON"
+DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+
+# VTK configuration
+VTK_MAJOR=9
+VTK_MINOR=0
+VTK_BUILD=1
+VTK_VERSION=$VTK_MAJOR.$VTK_MINOR.$VTK_BUILD
+VTK_OPTIONS="-D VTK_RENDERING_BACKEND:STRING=OpenGL2"
+
+# ITK configuration
+ITK_MAJOR=5
+ITK_MINOR=1
+ITK_BUILD=1
+ITK_VERSION=$ITK_MAJOR.$ITK_MINOR.$ITK_BUILD
+
+# Other libraries...
+JPEG_VERSION=9d
+PNG_VERSION=1.6.37
+TIFF_VERSION=4.0.10
+ZLIB_VERSION=1.3.1
+# ... etc
+
+# Application version
+MIELE_VERSION=8.4.62
+```
+
+---
+
+## Version Set Variables
+
+The build script (`build.sh`) reads these variables from the version set:
+
+<AccordionGroup>
+  <Accordion title="Build Configuration Variables">
+    - `MINUS_STD` - C++ standard (gnu++14 or gnu++17)
+    - `DEPL_TARG` - macOS deployment target
+    - `COMPILER_FLAGS` - Additional compiler flags
+  </Accordion>
+
+  <Accordion title="DCMTK Variables">
+    - `DCMTK_MAJOR`, `DCMTK_MINOR`, `DCMTK_BUILD` - Version components
+    - `DCMTK_VERSION` - Full version string
+    - `DCMTK_OPTIONS` - CMake configuration options
+    - `DCMTK_CXX_FLAGS` - Preprocessor definitions
+  </Accordion>
+
+  <Accordion title="VTK Variables">
+    - `VTK_MAJOR`, `VTK_MINOR`, `VTK_BUILD` - Version components
+    - `VTK_VERSION` - Full version string
+    - `VTK_OPTIONS` - CMake options (rendering backend, etc.)
+  </Accordion>
+
+  <Accordion title="ITK Variables">
+    - `ITK_MAJOR`, `ITK_MINOR`, `ITK_BUILD` - Version components
+    - `ITK_VERSION` - Full version string
+  </Accordion>
+
+  <Accordion title="Library Versions">
+    Each library has a `{LIBRARY}_VERSION` variable:
+    - `JPEG_VERSION`
+    - `PNG_VERSION`
+    - `TIFF_VERSION`
+    - `ZLIB_VERSION`
+    - `ICONV_VERSION`
+    - `OPENSSL_VERSION`
+    - `OPENJPG_VERSION` (with `OPENJPG_TAR` for download)
+    - `JASPER_VERSION`
+    - `XML2_VERSION`
+    - `GLEW_VERSION`
+    - `GLM_VERSION`
+  </Accordion>
+
+  <Accordion title="Application Version">
+    - `MIELE_VERSION` - Miele-LXIV application version
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Creating Custom Version Sets
+
+You can create custom version sets for testing newer library versions:
+
+1. Copy an existing version set:
+   ```bash
+   cp version-set-8.8.conf version-set-custom.conf
+   ```
+
+2. Edit the version numbers:
+   ```bash
+   # Modify library versions as needed
+   VTK_VERSION=9.1.0
+   ITK_VERSION=5.2.0
+   ```
+
+3. Update the configuration:
+   ```bash
+   rm seed.conf
+   ./build.sh
+   # Select your custom version set
+   ```
+
+<Warning>
+  Custom version sets may encounter compatibility issues. Test thoroughly and ensure library versions are compatible with each other.
+</Warning>
+
+---
+
+## Version Compatibility Notes
+
+<Accordion title="VTK and ITK Compatibility">
+  ITK depends on VTK through the `Module_ITKVtkGlue` option. Ensure VTK is built before ITK, and that versions are compatible:
+  
+  - ITK 4.x works with VTK 7.x and 8.x
+  - ITK 5.x requires VTK 8.2+ or VTK 9.x
+</Accordion>
+
+<Accordion title="DCMTK and OpenSSL">
+  DCMTK secure networking requires OpenSSL:
+  
+  - Version 7.1.38: OpenSSL disabled in DCMTK
+  - Version 7.3.46+: OpenSSL 1.1.x required
+  - Ensure `DCMTK_WITH_OPENSSL=ON` when using secure DICOM
+</Accordion>
+
+<Accordion title="C++ Standard Requirements">
+  - VTK 9.x and ITK 5.x require at least C++11
+  - Recommended: Use gnu++17 for version 8.8+
+  - Older versions can use gnu++14
+</Accordion>
+
+---
+
+## Related Pages
+
+- [Configuration Options](/configuration/options) - Detailed configuration reference
+- [Directory Structure](/configuration/directories) - How version sets organize build outputs
+- [Quick Start Guide](/setup/overview) - Initial setup workflow

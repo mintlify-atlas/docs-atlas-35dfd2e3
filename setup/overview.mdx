@@ -1,0 +1,88 @@
+---
+title: Setup Overview
+description: Complete overview of the Miele-LXIV Easy 5-step setup workflow
+---
+
+The Miele-LXIV Easy build system guides you through a structured 5-step workflow to configure and prepare the Xcode project for building Miele-LXIV. Each step is carefully designed to be executed in sequence.
+
+<Info>
+The goal of this project is **NOT to build Miele-LXIV**, but to **create and configure the Xcode project** that builds Miele-LXIV.
+</Info>
+
+## The 5-Step Workflow
+
+<CardGroup cols={2}>
+  <Card title="Step 1: Initial Configuration" icon="gear" href="/setup/step1-configuration">
+    Configure the build system with kconfig-mconf and set up directory locations.
+    
+    **Time**: 5 minutes
+  </Card>
+  
+  <Card title="Step 2: Download Sources" icon="download" href="/setup/step2-download">
+    Download all required third-party library sources (DCMTK, VTK, ITK, and more).
+    
+    **Time**: 15-30 minutes
+  </Card>
+  
+  <Card title="Step 3: Build and Install" icon="hammer" href="/setup/step3-build">
+    Compile and install all third-party libraries and dependencies.
+    
+    **Time**: ~1 hour
+  </Card>
+  
+  <Card title="Step 4: Create Symbolic Links" icon="link" href="/setup/step4-symlinks">
+    Set up the Binaries directory with symbolic links to installed libraries.
+    
+    **Time**: 2 minutes
+  </Card>
+  
+  <Card title="Step 5: Xcode Configuration" icon="screwdriver-wrench" href="/setup/step5-xcode">
+    Final manual Xcode project configuration and fixes.
+    
+    **Time**: 10-15 minutes
+  </Card>
+</CardGroup>
+
+## Directory Structure
+
+Before starting, you'll define three top-level directories (or accept the suggested defaults in Step 1):
+
+1. **SRC**: Sources directory where all source files will be downloaded
+2. **BLD**: Build directory for temporary intermediate files
+3. **BIN**: Install directory where the Xcode project will reference installed 3rd party modules
+
+## Prerequisites
+
+Before beginning the setup workflow, ensure you have the required tools installed:
+
+- **kconfig-mconf**: Configuration menu tool (install via NuttX project)
+- **wget**: Download utility
+- **cmake**: Command-line CMake utility
+
+<Note>
+If you need help installing prerequisites, see the [Prerequisites Guide](/prerequisites).
+</Note>
+
+## What Gets Built
+
+The build process compiles and installs the following libraries:
+
+- **DCMTK**: DICOM Toolkit
+- **VTK**: Visualization Toolkit
+- **ITK**: Insight Segmentation and Registration Toolkit
+- **OpenJPEG**: JPEG 2000 codec
+- **libjpeg, libpng, libtiff**: Image format libraries
+- **OpenSSL**: Cryptography library
+- **libxml2, libiconv, zlib**: Support libraries
+- **GLEW, GLM**: OpenGL libraries
+- **Jasper**: Image processing library
+
+## Estimated Total Time
+
+**1.5 to 2 hours** for the complete setup (most of it automated build time)
+
+## Next Steps
+
+<Card title="Start with Step 1" icon="play" href="/setup/step1-configuration">
+  Begin the setup process by configuring your build environment
+</Card>

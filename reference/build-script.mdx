@@ -1,0 +1,474 @@
+---
+title: build.sh Reference
+description: Complete reference for the main build script that orchestrates the entire build process
+---
+
+## Overview
+
+The `build.sh` script is the main orchestrator for building Miele-LXIV and all its dependencies. It downloads, configures, compiles, and installs all required third-party libraries in the correct order.
+
+## Usage
+
+```bash
+./build.sh
+```
+
+The script requires no command-line arguments. All configuration is controlled through configuration files.
+
+## Prerequisites
+
+Before running `build.sh`, ensure the following tools are installed:
+
+<ParamField path="kconfig-mconf" type="required">
+  Interactive menu-based configuration tool. The script will exit if not found.
+</ParamField>
+
+<ParamField path="cmake" type="required">
+  Command-line CMake tool for configuring builds. The script will exit if not found.
+</ParamField>
+
+## Configuration Files
+
+The build script sources three configuration files in order:
+
+1. **`seed.conf`** - Directory paths and generator settings (created by `seed.sh`)
+2. **`steps.conf`** - Build step flags (created by `reconfigure.sh`)
+3. **Version set file** - Package versions (specified in `seed.conf` as `CONFIG_VERSION_SET`)
+
+### First Run Behavior
+
+If `seed.conf` does not exist:
+
+```bash build.sh:21-30
+if [ ! -f seed.conf ]; then
+    ./seed.sh
+
+    if [ -f seed.conf ]; then
+        echo "TIMESTAMP=$APP-$(date +%Y%m%d_%H%M)" >> seed.conf
+    fi
+
+    mkdir -p log
+    exit 0
+fi
+```
+
+The script will:
+1. Run `seed.sh` to create initial configuration
+2. Append a timestamp to `seed.conf`
+3. Create a `log` directory
+4. Exit (run again to start the build)
+
+## Environment Variables
+
+The script reads and uses the following variables from configuration files:
+
+### Generator Selection
+
+<ParamField path="CONFIG_GENERATOR_XC" type="boolean">
+  If set, uses Xcode generator. Controlled by `seed.conf`.
+</ParamField>
+
+<ParamField path="CONFIG_GENERATOR_MK" type="boolean">
+  If set, uses Unix Makefiles generator. Controlled by `seed.conf`.
+</ParamField>
+
+```bash build.sh:36-40
+if [ $CONFIG_GENERATOR_XC ] ; then
+    GENERATOR="Xcode"
+elif [ $CONFIG_GENERATOR_MK ] ; then
+    GENERATOR="Unix Makefiles"
+fi
+```
+
+### Directory Configuration
+
+<ParamField path="CONFIG_SRC_DIR" type="string">
+  Base directory for source code. Example: `~/Downloads/source`
+</ParamField>
+
+<ParamField path="CONFIG_BLD_DIR" type="string">
+  Base directory for build artifacts. Example: `~/Documents/temp/build`
+</ParamField>
+
+<ParamField path="CONFIG_BIN_DIR" type="string">
+  Base directory for installed binaries. Example: `~/Applications`
+</ParamField>
+
+<ParamField path="CONFIG_SHARED_SOURCES" type="boolean">
+  If true, unpatched packages are placed in shared parent directory to avoid re-downloading.
+</ParamField>
+
+```bash build.sh:58-63
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP
+fi
+eval SRC_P=$CONFIG_SRC_DIR/$TIMESTAMP # patched packages
+```
+
+### Version Variables
+
+All version variables are sourced from the version set file:
+
+<ParamField path="DCMTK_VERSION" type="string">
+  DCMTK version (e.g., "3.6.5")
+</ParamField>
+
+<ParamField path="VTK_VERSION" type="string">
+  VTK version (e.g., "9.0.1")
+</ParamField>
+
+<ParamField path="ITK_VERSION" type="string">
+  ITK version (e.g., "5.1.1")
+</ParamField>
+
+<ParamField path="OPENSSL_VERSION" type="string">
+  OpenSSL version (e.g., "1.1.1d")
+</ParamField>
+
+<ParamField path="JPEG_VERSION" type="string">
+  JPEG library version (e.g., "9d")
+</ParamField>
+
+<ParamField path="PNG_VERSION" type="string">
+  PNG library version (e.g., "1.6.37")
+</ParamField>
+
+<ParamField path="TIFF_VERSION" type="string">
+  TIFF library version (e.g., "4.0.10")
+</ParamField>
+
+<ParamField path="ZLIB_VERSION" type="string">
+  zlib version (e.g., "1.3.1")
+</ParamField>
+
+<ParamField path="OPENJPG_VERSION" type="string">
+  OpenJPEG version (e.g., "2.3.1")
+</ParamField>
+
+<ParamField path="JASPER_VERSION" type="string">
+  Jasper version (e.g., "2.0.32")
+</ParamField>
+
+<ParamField path="GLEW_VERSION" type="string">
+  GLEW version (e.g., "2.1.0")
+</ParamField>
+
+<ParamField path="GLM_VERSION" type="string">
+  GLM version (e.g., "0.9.8.5")
+</ParamField>
+
+### Build Control Variables
+
+<ParamField path="OSX_ARCHITECTURES" type="string">
+  Target architecture (auto-detected via `uname -m`)
+</ParamField>
+
+<ParamField path="MAKE_FLAGS" type="string">
+  Parallel build flags (auto-set to `-j <cpu_count>`)
+</ParamField>
+
+<ParamField path="DEPL_TARG" type="string">
+  macOS deployment target (defaults to current macOS version)
+</ParamField>
+
+## Build Workflow
+
+The script processes libraries in dependency order:
+
+### 1. Foundation Libraries
+
+```
+libiconv → OpenSSL → libpng → zlib → libxml2 → libjpeg → libtiff
+```
+
+Each library follows this pattern:
+
+1. **Download** - If `STEP_DOWNLOAD_LIB_<NAME>` is set and source doesn't exist
+2. **Configure** - If `STEP_CONFIGURE_LIB_<NAME>` is set
+3. **Compile** - If `STEP_COMPILE_LIB_<NAME>` is set
+
+#### Example: libpng
+
+```bash build.sh:207-228
+if [ $STEP_CONFIGURE_LIB_PNG ] ; then
+    echo "=== Configure library $PNG"
+    mkdir -p $BLD_PNG ; cd $BLD_PNG
+
+    $CMAKE -G"$GENERATOR" \
+        -D CMAKE_INSTALL_PREFIX=$BIN_PNG \
+        -D CMAKE_OSX_ARCHITECTURES=$OSX_ARCHITECTURES \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_OSX_DEPLOYMENT_TARGET=$DEPL_TARG \
+        -D PNG_FRAMEWORK=ON \
+        -D BUILD_SHARED_LIBS=ON \
+        -D CMAKE_CXX_FLAGS="$COMPILER_FLAGS" \
+        $SRC_PNG
+fi
+
+if [ $STEP_COMPILE_LIB_PNG ] ; then
+    cd $BLD_PNG
+    echo "=== Build library PNG"
+    make $MAKE_FLAGS
+    echo "=== Install library PNG"
+    make install
+fi
+```
+
+### 2. VTK (Visualization Toolkit)
+
+VTK is built with system TIFF and JPEG libraries:
+
+```bash build.sh:411-431
+if [ $STEP_CONFIGURE_VTK ] ; then
+    echo "=== Configure VTK"
+    mkdir -p $BLD_VTK ; cd $BLD_VTK
+    $CMAKE -G"$GENERATOR" \
+        -D CMAKE_INSTALL_PREFIX=$BIN_VTK \
+        -D CMAKE_OSX_ARCHITECTURES=$OSX_ARCHITECTURES \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_OSX_DEPLOYMENT_TARGET=$DEPL_TARG \
+        -D BUILD_SHARED_LIBS=OFF \
+        -D BUILD_TESTING=OFF \
+        -D BUILD_EXAMPLES=OFF \
+        -D BUILD_DOCUMENTATION=OFF \
+        -D VTK_LEGACY_REMOVE=OFF \
+        $VTK_OPTIONS \
+        -D VTK_USE_SYSTEM_TIFF=ON \
+        -D VTK_USE_SYSTEM_JPEG=ON \
+        -D VTK_MODULE_ENABLE_VTK_hdf5=NO \
+        -D CMAKE_CXX_FLAGS="$COMPILER_FLAGS" \
+        $SRC_VTK
+fi
+```
+
+**Optional Collapse Step:**
+
+```bash build.sh:449-459
+if [ $STEP_COLLAPSE_VTK ] ; then
+    cd $BIN_VTK
+    VTK_COLLAPSED=lib/libVTK.a
+    if [ ! -f $VTK_COLLAPSED ] ; then
+        echo "=== Collapse VTK into a single library"
+        ARGS=$(find lib -name '*.a' -type f)
+        libtool -static -v -o $VTK_COLLAPSED $ARGS
+    else
+        echo $VTK_COLLAPSED exists
+    fi
+fi
+```
+
+### 3. ITK (Insight Toolkit)
+
+ITK is built with VTK integration enabled:
+
+```bash build.sh:479-496
+if [ $STEP_CONFIGURE_ITK ] ; then
+    echo "=== Configure ITK"
+    mkdir -p $BLD_ITK ; cd $BLD_ITK
+    rm -f CMakeCache.txt
+    $CMAKE -G"$GENERATOR" \
+        -D CMAKE_INSTALL_PREFIX=$BIN_ITK \
+        -D CMAKE_OSX_ARCHITECTURES=$OSX_ARCHITECTURES \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_OSX_DEPLOYMENT_TARGET=$DEPL_TARG \
+        -D BUILD_SHARED_LIBS=OFF \
+        -D BUILD_TESTING=OFF \
+        -D BUILD_EXAMPLES=OFF \
+        -D Module_ITKOpenJPEG=OFF \
+        -D Module_ITKVtkGlue=ON \
+        -D VTK_DIR=$BIN_VTK/lib/cmake/vtk-$VTK_MAJOR.$VTK_MINOR \
+        -D CMAKE_CXX_FLAGS="$COMPILER_FLAGS" \
+        $SRC_ITK
+fi
+```
+
+### 4. DCMTK (DICOM Toolkit)
+
+DCMTK includes patching step:
+
+```bash build.sh:531-538
+PATCH_FILENAME=${DCMTK}_${MIELE}.patch
+
+if [ $STEP_PATCH_DCMTK ] && [ -f $PATCH_DIR/$PATCH_FILENAME ] ; then
+    cd $SRC_DCMTK
+    echo "=== Patch DCMTK"
+    patch -p1 -i $PATCH_DIR/$PATCH_FILENAME
+fi
+```
+
+Configuration includes OpenSSL and iconv support:
+
+```bash build.sh:546-570
+if [ $STEP_CONFIGURE_DCMTK ] ; then
+    echo "=== Configure $DCMTK"
+    mkdir -p $BLD_DCMTK ; cd $BLD_DCMTK
+    rm -f CMakeCache.txt
+    $CMAKE -G"$GENERATOR" \
+        -D CMAKE_INSTALL_PREFIX=$BIN_DCMTK \
+        -D CMAKE_OSX_ARCHITECTURES=$OSX_ARCHITECTURES \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_OSX_DEPLOYMENT_TARGET=$DEPL_TARG \
+        -D CMAKE_CXX_FLAGS="-D $DCMTK_CXX_FLAGS" \
+        -D BUILD_SHARED_LIBS=OFF \
+        $DCMTK_OPTIONS \
+        -D JPEG_INCLUDE_DIR=$BIN_JPEG/include \
+        -D JPEG_LIBRARY_RELEASE=$BIN_JPEG/lib/libjpeg.a \
+        -D LIBCHARSET_INCLUDE_DIR=$BIN_ICONV/include \
+        -D LIBCHARSET_LIBRARY=$BIN_ICONV/lib/libcharset.a \
+        -D Iconv_INCLUDE_DIR=$BIN_ICONV/include \
+        -D Iconv_LIBRARY=$BIN_ICONV/lib/libiconv.a \
+        -D WITH_OPENSSLINC=ON \
+        -D OPENSSL_VERSION_CHECK=ON \
+        -D OPENSSL_INCLUDE_DIR=$BIN_OPENSSL/include \
+        -D OPENSSL_CRYPTO_LIBRARY=$BIN_OPENSSL/lib/libcrypto.a \
+        -D OPENSSL_SSL_LIBRARY=$BIN_OPENSSL/lib/libssl.a \
+        $SRC_DCMTK
+fi
+```
+
+Post-install includes copying additional headers:
+
+```bash build.sh:591-602
+if [ $STEP_POST_INSTALL_DCMTK ] ; then        
+    echo "=== Post-install DCMTK"
+    cp -R $SRC_DCMTK/dcmjpeg/libijg8 $BIN_DCMTK/include/dcmtk/dcmjpeg
+    cp -R $SRC_DCMTK/dcmjpeg/libijg12 $BIN_DCMTK/include/dcmtk/dcmjpeg
+    cp -R $SRC_DCMTK/dcmjpeg/libijg16 $BIN_DCMTK/include/dcmtk/dcmjpeg
+    cp $SRC_DCMTK/dcmjpls/libcharls/intrface.h $BIN_DCMTK/include/dcmtk/dcmjpls
+    cp $SRC_DCMTK/dcmjpls/libcharls/pubtypes.h $BIN_DCMTK/include/dcmtk/dcmjpls
+    sed -i -e "s@#include \"config.h\"@//#include \"config.h\"@g" "$BIN_DCMTK/include/dcmtk/dcmjpls/pubtypes.h"
+    if [ $DCMTK_VERSION != 3.6.2 ] && [ $DCMTK_VERSION != 3.6.3 ] && [ $DCMTK_VERSION != 3.6.4 ] ; then
+        sed -i -e "s/#define PACKAGE_DATE \"DEV\"/#define PACKAGE_DATE \"$(date +%Y%m%d)\"/g" "$BIN_DCMTK/include/dcmtk/config/osconfig.h"
+    fi
+fi
+```
+
+### 5. Image Libraries
+
+OpenJPEG and Jasper for additional image format support.
+
+### 6. OpenGL Libraries
+
+GLEW and GLM for graphics support.
+
+### 7. Miele-LXIV Application
+
+Final step downloads the application source and creates symbolic links to built libraries:
+
+```bash build.sh:883-899
+if [ $STEP_CREATE_SYMLINKS ] ; then
+    echo "=== Create symbolic links in $BINARIES"
+    if [ $STEP_CREATE_SYMLINKS_ICONV ] ;   then ln -s $BIN_ICONV    $BINARIES/libiconv ; fi
+    if [ $STEP_CREATE_SYMLINKS_JPEG ] ;    then ln -s $BIN_JPEG     $BINARIES/libjpeg ; fi
+    if [ $STEP_CREATE_SYMLINKS_TIFF ] ;    then ln -s $BIN_TIFF     $BINARIES/libtiff ; fi
+    if [ $STEP_CREATE_SYMLINKS_XML2 ] ;    then ln -s $BIN_XML2     $BINARIES/libxml2 ; fi
+    if [ $STEP_CREATE_SYMLINKS_ZLIB ] ;    then ln -s $BIN_ZLIB     $BINARIES/zlib ; fi
+    if [ $STEP_CREATE_SYMLINKS_VTK ] ;     then ln -s $BIN_VTK      $BINARIES/VTK ; fi
+    if [ $STEP_CREATE_SYMLINKS_ITK ] ;     then ln -s $BIN_ITK      $BINARIES/ITK ; fi
+    if [ $STEP_CREATE_SYMLINKS_DCMTK ] ;   then ln -s $BIN_DCMTK    $BINARIES/DCMTK ; fi
+    if [ $STEP_CREATE_SYMLINKS_OPENJPG ] ; then ln -s $BIN_OPENJPG  $BINARIES/openjpeg ; fi
+    if [ $STEP_CREATE_SYMLINKS_OPENSSL ] ; then ln -s $BIN_OPENSSL  $BINARIES/openssl ; fi
+    if [ $STEP_CREATE_SYMLINKS_PNG ] ;     then ln -s $BIN_PNG      $BINARIES/libpng ; fi
+    if [ $STEP_CREATE_SYMLINKS_JASPER ] ;  then ln -s $BIN_JASPER   $BINARIES/Jasper ; fi
+    if [ $STEP_CREATE_SYMLINKS_GLEW ] ;    then ln -s $BIN_GLEW     $BINARIES/GLEW ; fi
+    if [ $STEP_CREATE_SYMLINKS_GLM ] ;     then ln -s $BIN_GLM      $BINARIES/GLM ; fi
+fi
+```
+
+## Step Control Flags
+
+All build steps are controlled by flags in `steps.conf`. The naming convention is:
+
+- `STEP_DOWNLOAD_<PACKAGE>` - Download source code
+- `STEP_PATCH_<PACKAGE>` - Apply patches
+- `STEP_CONFIGURE_<PACKAGE>` - Run CMake/configure
+- `STEP_COMPILE_<PACKAGE>` or `STEP_BUILD_<PACKAGE>` - Compile and install
+- `STEP_INSTALL_<PACKAGE>` - Install (separate from build for some packages)
+- `STEP_POST_INSTALL_<PACKAGE>` - Post-installation tasks
+- `STEP_COLLAPSE_<PACKAGE>` - Combine static libraries into single .a file
+- `STEP_INFO_<PACKAGE>` - Display version information
+
+## Common Patterns
+
+### Conditional Download
+
+```bash
+if [ $STEP_DOWNLOAD_LIB_PNG ] && [ ! -d $SRC_PNG ]  ; then
+    cd $SRC
+    curl -O https://dicom.offis.de/download/dcmtk/$DCMTK_PAGE/support/$PNG.tar.gz
+    tar -zxf $PNG.tar.gz
+    rm $PNG.tar.gz
+fi
+```
+
+Downloads only if:
+1. Step flag is enabled
+2. Source directory doesn't exist
+
+### CMake Configuration Pattern
+
+```bash
+mkdir -p $BLD_<PACKAGE> ; cd $BLD_<PACKAGE>
+$CMAKE -G"$GENERATOR" \
+    -D CMAKE_INSTALL_PREFIX=$BIN_<PACKAGE> \
+    -D CMAKE_OSX_ARCHITECTURES=$OSX_ARCHITECTURES \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D CMAKE_OSX_DEPLOYMENT_TARGET=$DEPL_TARG \
+    -D BUILD_SHARED_LIBS=OFF \
+    $SRC_<PACKAGE>
+```
+
+### Build and Install Pattern
+
+```bash
+cd $BLD_<PACKAGE>
+make $MAKE_FLAGS
+make install
+```
+
+## Troubleshooting
+
+### OpenSSL Build Issues
+
+If you encounter `_EVP_PKEY_get_bits` errors during DCMTK build:
+
+```bash build.sh:577-582
+# If you get errors about _EVP_PKEY_get_bits, comment in the following 4 brew lines
+#brew unlink openssl@3
+#brew link openssl@1.1
+make $MAKE_FLAGS
+#brew unlink openssl@1.1
+#brew link openssl@3
+```
+
+### Version Detection
+
+The script uses version comparison functions:
+
+```bash build.sh:138-139
+function version_gt() { test "$(printf '%s\n' "$@" | $SORT -V | head -n 1)" != "$1"; }
+function version_le() { test "$(printf '%s\n' "$@" | $SORT -V | head -n 1)" == "$1"; }
+```
+
+Used for conditional configuration:
+
+```bash build.sh:279-300
+if version_le $XML2_VERSION 2.9.10 ; then
+    echo "=== Configure help"
+    $SRC_XML2/configure --help
+    echo "=== Configure $XML2, install to $BIN_XML2"
+    $SRC_XML2/configure --prefix=$BIN_XML2 --enable-static=yes --enable-shared=no --disable-rpath
+else
+    echo "=== Configure with CMake $XML2, install to $BIN_XML2"
+    # ... CMake configuration
+fi
+```
+
+## See Also
+
+- [reconfigure.sh Reference](/reference/reconfigure-script) - Modify build steps
+- [seed.conf Reference](/reference/seed-conf) - Initial configuration
+- [Version Sets](/reference/version-sets) - Package version configuration
+- [Kconfig Configuration](/reference/kconfig) - Configuration file format

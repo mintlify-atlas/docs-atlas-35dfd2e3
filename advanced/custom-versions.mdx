@@ -1,0 +1,371 @@
+---
+title: Using Custom Versions
+description: Configuring custom library versions and creating new version sets
+---
+
+## Overview
+
+The build system uses version sets to define which versions of each library to build. You can create custom version sets to experiment with newer libraries, test compatibility, or address specific requirements.
+
+## Version Set Structure
+
+Version sets are configuration files that define library versions and build options. The default is `version-set-8.8`.
+
+### Example Version Set
+
+A typical version set file contains:
+
+```bash
+# DCMTK configuration
+DCMTK_VERSION=3.6.5
+DCMTK_MAJOR=3
+DCMTK_MINOR=6
+DCMTK_BUILD=5
+DCMTK_CXX_FLAGS=FOR_MIELE_LXIV
+DCMTK_OPTIONS="-D DCMTK_ENABLE_CHARSET_CONVERSION=libiconv"
+
+# VTK configuration
+VTK_VERSION=9.0.1
+VTK_MAJOR=9
+VTK_MINOR=0
+VTK_OPTIONS="-D VTK_GROUP_ENABLE_Rendering=DONT_WANT"
+
+# ITK configuration
+ITK_VERSION=5.1.2
+ITK_MAJOR=5
+ITK_MINOR=1
+ITK_BUILD=2
+
+# Additional libraries
+OPENSSL_VERSION=1.1.1k
+GLEW_VERSION=glew-2.2.0
+JPEG_VERSION=9d
+PNG_VERSION=1.6.37
+TIFF_VERSION=4.2.0
+ZLIB_VERSION=1.2.11
+XML2_VERSION=2.9.12
+OPENJPG_VERSION=2.3.1
+OPENJPG_TAR=v2.3.1
+JASPER_VERSION=2.0.33
+ICONV_VERSION=1.16
+GLM_VERSION=0.9.9.8
+
+# Application version
+MIELE_VERSION=8.4.62
+```
+
+## Understanding Version Components
+
+Libraries use different versioning schemes:
+
+### Semantic Versioning (MAJOR.MINOR.BUILD)
+
+```bash
+DCMTK_VERSION=3.6.5
+DCMTK_MAJOR=3      # Major version
+DCMTK_MINOR=6      # Minor version
+DCMTK_BUILD=5      # Build/patch version
+```
+
+Used for: DCMTK, VTK, ITK, OpenSSL
+
+### Simple Version Strings
+
+```bash
+JPEG_VERSION=9d           # Single version string
+GLEW_VERSION=glew-2.2.0   # Includes package prefix
+OPENJPG_TAR=v2.3.1        # Tag name for Git downloads
+```
+
+### Special Cases
+
+```bash
+XML2_VERSION=2.9.12       # Note: Uses 'v' prefix since 2.9.13
+GLM_VERSION=0.9.9.8       # Four-component version
+```
+
+## Source Directory Behavior
+
+The build system handles source directories differently based on whether packages are patched:
+
+### Shared Sources (Non-Patched)
+
+```bash
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR        # e.g., ~/src
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP  # e.g., ~/src/miele-easy-20260304_1530
+fi
+```
+
+**Non-patched libraries** can share sources:
+- OpenSSL, GLEW, GLM, ICONV, ITK, JASPER, JPEG, PNG, TIFF, VTK, XML2, ZLIB
+
+### Timestamped Sources (Patched)
+
+```bash
+eval SRC_P=$CONFIG_SRC_DIR/$TIMESTAMP  # Always timestamped
+SRC_DCMTK=$SRC_P/$DCMTK        # Patched
+SRC_OPENJPG=$SRC_P/$OPENJPG    # Patched
+SRC_APP=$SRC_P/$MIELE          # Patched
+```
+
+**Patched libraries** always use timestamped directories:
+- DCMTK, OpenJPEG, Miele-LXIV
+
+<Warning>
+Patched packages cannot be shared between builds because modifications are applied to the source files. Each build gets its own timestamped copy.
+</Warning>
+
+## Creating a Custom Version Set
+
+<Steps>
+  <Step title="Copy an existing version set">
+    Start with a working configuration:
+    ```bash
+    cd $EASY_HOME
+    cp version-set-8.8 version-set-custom
+    ```
+  </Step>
+
+  <Step title="Edit library versions">
+    Modify versions carefully:
+    ```bash
+    vim version-set-custom
+    ```
+    
+    Example changes:
+    ```bash
+    # Update DCMTK to newer version
+    DCMTK_VERSION=3.6.7
+    DCMTK_MAJOR=3
+    DCMTK_MINOR=6
+    DCMTK_BUILD=7
+    
+    # Update VTK
+    VTK_VERSION=9.2.0
+    VTK_MAJOR=9
+    VTK_MINOR=2
+    ```
+  </Step>
+
+  <Step title="Update configuration">
+    Select your custom version set:
+    ```bash
+    ./seed.sh
+    # Navigate to "Version set" and select your custom file
+    # Save and exit
+    ```
+  </Step>
+
+  <Step title="Verify configuration">
+    Check that settings are correct:
+    ```bash
+    source seed.conf
+    source $CONFIG_VERSION_SET
+    echo "DCMTK: $DCMTK_VERSION"
+    echo "VTK: $VTK_VERSION"
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Changing library versions may introduce compatibility issues. Newer versions might:
+- Require different build flags
+- Have API changes incompatible with Miele-LXIV
+- Need updated or new patches
+- Break existing functionality
+</Warning>
+
+## Adding New Libraries
+
+To add a completely new library to the build:
+
+<Steps>
+  <Step title="Add version variables">
+    Edit your version set:
+    ```bash
+    # Add to version-set-custom
+    NEWLIB_VERSION=1.2.3
+    NEWLIB_MAJOR=1
+    NEWLIB_MINOR=2
+    ```
+  </Step>
+
+  <Step title="Add build script sections">
+    Edit `build.sh` to add download, configure, and build steps:
+    ```bash
+    NEWLIB=newlib-$NEWLIB_VERSION
+    SRC_NEWLIB=$SRC/$NEWLIB
+    BLD_NEWLIB=$BLD/$NEWLIB
+    BIN_NEWLIB=$BIN/$NEWLIB
+    
+    # Download section
+    if [ $STEP_DOWNLOAD_NEWLIB ] && [ ! -d $SRC_NEWLIB ] ; then
+        cd $SRC
+        wget https://example.com/newlib-$NEWLIB_VERSION.tar.gz
+        tar -zxf $NEWLIB.tar.gz
+        rm $NEWLIB.tar.gz
+    fi
+    
+    # Configure section
+    if [ $STEP_CONFIGURE_NEWLIB ] ; then
+        mkdir -p $BLD_NEWLIB ; cd $BLD_NEWLIB
+        $CMAKE -G"$GENERATOR" \
+            -D CMAKE_INSTALL_PREFIX=$BIN_NEWLIB \
+            -D CMAKE_BUILD_TYPE=Release \
+            $SRC_NEWLIB
+    fi
+    
+    # Build section
+    if [ $STEP_BUILD_NEWLIB ] ; then
+        cd $BLD_NEWLIB
+        make $MAKE_FLAGS
+        make install
+    fi
+    ```
+  </Step>
+
+  <Step title="Add Kconfig options">
+    Edit `Kconfig-miele` to add configuration options:
+    ```
+    config DOWNLOAD_NEWLIB
+        bool "NewLib"
+        default y
+    
+    config CONFIGURE_NEWLIB
+        bool "NewLib"
+        default y
+    
+    config BUILD_NEWLIB
+        bool "Build NewLib"
+        default y
+    ```
+  </Step>
+
+  <Step title="Add symbolic link support">
+    If the library needs to be linked into the Binaries directory:
+    ```bash
+    # In build.sh STEP_CREATE_SYMLINKS section
+    if [ $STEP_CREATE_SYMLINKS_NEWLIB ] ; then
+        ln -s $BIN_NEWLIB $BINARIES/newlib
+    fi
+    ```
+  </Step>
+</Steps>
+
+## Testing Custom Configurations
+
+### Start Small
+
+Test one library at a time:
+
+```bash
+./reconfigure.sh
+# Enable only: Download → DCMTK
+# Enable: Configure → DCMTK
+# Enable: Build → DCMTK
+```
+
+### Capture Build Logs
+
+Always log your builds for troubleshooting:
+
+```bash
+mkdir -p log
+script log/test-dcmtk-$(date +%Y%m%d_%H%M).txt
+./build.sh ; exit
+```
+
+### Verify Installation
+
+Check that libraries installed correctly:
+
+```bash
+ls -la $BIN/dcmtk-3.6.7/lib/
+ls -la $BIN/dcmtk-3.6.7/include/
+```
+
+### Test with Miele-LXIV
+
+After building dependencies, attempt to build the application:
+
+```bash
+# Create symbolic links
+./reconfigure.sh
+# Enable: Create Symbolic links
+./build.sh
+
+# Open Xcode project and attempt build
+open $SRC_APP/miele-lxiv.xcodeproj
+```
+
+## Common Version Update Scenarios
+
+### Updating DCMTK
+
+```bash
+# Check for patches
+ls patch/dcmtk-*.patch
+
+# If no patch exists for new version, you'll need to:
+# 1. Create new patch (see Patching Dependencies)
+# 2. Update version set
+# 3. Test thoroughly
+```
+
+### Updating VTK/ITK
+
+```bash
+# Major version changes often require option updates
+VTK_VERSION=9.2.0
+VTK_MAJOR=9
+VTK_MINOR=2
+VTK_OPTIONS="-D VTK_GROUP_ENABLE_Rendering=DONT_WANT -D VTK_VERSIONED_INSTALL=OFF"
+```
+
+### Updating OpenSSL
+
+```bash
+# Check compatibility comments in build.sh:577-582
+# May need to switch between OpenSSL 1.1 and 3.x
+OPENSSL_VERSION=1.1.1w  # Stay on 1.1.x branch for compatibility
+```
+
+<Warning>
+OpenSSL version changes can cause linking errors with DCMTK. If you encounter `_EVP_PKEY_get_bits` errors, see build.sh:577 for brew workaround.
+</Warning>
+
+## Version Set Best Practices
+
+1. **Document changes**: Comment why you changed versions
+2. **Keep backups**: Copy working version sets before modifications
+3. **Test incrementally**: Update one library at a time
+4. **Check dependencies**: Some libraries depend on others (ITK needs VTK)
+5. **Maintain patches**: Update patches when changing patched library versions
+6. **Record build configuration**: Save successful configurations
+
+## Reverting to Known Good Configuration
+
+If your custom configuration fails:
+
+```bash
+# Restore default version set
+./seed.sh
+# Select "version-set-8.8"
+
+# Clear failed build
+rm -rf $BLD/*
+rm -rf $BIN/*
+
+# Restart build process
+./reconfigure.sh
+# Enable: Download, Configure, Build, Install
+./build.sh
+```
+
+## Related Topics
+
+- [Patching Dependencies](/advanced/patching) - Creating patches for custom versions
+- [Troubleshooting](/advanced/troubleshooting) - Resolving build issues
+- [Configuration Basics](/reference/kconfig) - Understanding the configuration system

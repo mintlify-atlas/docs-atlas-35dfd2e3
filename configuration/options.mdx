@@ -1,0 +1,459 @@
+---
+title: Configuration Options
+description: Complete reference for all Kconfig configuration options in Miele-LXIV Easy
+---
+
+Miele-LXIV Easy uses a Kconfig-based configuration system to control which components are downloaded, built, and installed. The configuration is managed through the `kconfig-mconf` tool, which provides an interactive menu interface.
+
+## Configuration Workflow
+
+The configuration system is accessed through:
+
+```bash
+./reconfigure.sh
+```
+
+This launches an interactive menu where you can enable or disable different build phases and select which modules to process.
+
+## Configuration Sections
+
+The build system is organized into six main configuration sections:
+
+1. **Download** - Download source packages and apply patches
+2. **Info** - Display version information for modules
+3. **Configure** - Run configuration scripts for each module
+4. **Build** - Compile and install modules
+5. **Install** - Install specific modules with post-processing
+6. **Symlinks** - Manage symbolic links in the Binaries directory
+
+---
+
+## Download Options
+
+<ParamField path="DOWNLOAD" type="boolean" default="n">
+  Master switch to enable source downloads. When enabled, downloads source packages and applies available patches.
+</ParamField>
+
+### Download Modules
+
+When `DOWNLOAD` is enabled, you can select individual modules to download:
+
+<AccordionGroup>
+  <Accordion title="Core Libraries">
+    <ParamField path="DOWNLOAD_SOURCES_OPENSSL" type="boolean" default="y">
+      Download OpenSSL cryptographic library sources.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_ICONV" type="boolean" default="y">
+      Download libiconv character encoding conversion library.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_PNG" type="boolean" default="y">
+      Download libpng image library.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_Z" type="boolean" default="y">
+      Download zlib compression library.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_XML2" type="boolean" default="y">
+      Download libxml2 XML parsing library.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_JPEG" type="boolean" default="y">
+      Download libjpeg image library.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_LIB_TIFF" type="boolean" default="y">
+      Download libtiff image library.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Visualization & Medical Imaging">
+    <ParamField path="DOWNLOAD_SOURCES_VTK" type="boolean" default="y">
+      Download VTK (Visualization Toolkit) for 3D graphics and visualization.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_SOURCES_ITK" type="boolean" default="y">
+      Download ITK (Insight Toolkit) for medical image processing.
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_SOURCES_DCMTK" type="boolean" default="y">
+      Download DCMTK (DICOM Toolkit) for medical imaging standards.
+    </ParamField>
+
+    <ParamField path="PATCH_DCMTK" type="boolean" default="y">
+      Apply Miele-LXIV specific patches to DCMTK after download.
+      
+      **Depends on:** `DOWNLOAD_SOURCES_DCMTK`
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Image Codecs">
+    <ParamField path="DOWNLOAD_SOURCES_OPENJPG" type="boolean" default="y">
+      Download OpenJPEG library for JPEG 2000 compression.
+    </ParamField>
+
+    <ParamField path="PATCH_OPENJPG" type="boolean" default="y">
+      Apply patches to OpenJPEG.
+      
+      **Depends on:** `DOWNLOAD_SOURCES_OPENJPG`
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_SOURCES_JASPER" type="boolean" default="y">
+      Download Jasper JPEG-2000 codec library.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Graphics Libraries">
+    <ParamField path="DOWNLOAD_SOURCES_GLEW" type="boolean" default="n">
+      Download GLEW (OpenGL Extension Wrangler Library).
+    </ParamField>
+
+    <ParamField path="DOWNLOAD_SOURCES_GML" type="boolean" default="n">
+      Download GLM (OpenGL Mathematics) library.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Application">
+    <ParamField path="DOWNLOAD_SOURCES_APP" type="boolean" default="y">
+      Download the Miele-LXIV application source code from GitHub.
+    </ParamField>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Info Options
+
+<ParamField path="INFO" type="boolean" default="n">
+  Master switch to display version information for installed modules.
+</ParamField>
+
+### Info Modules
+
+When `INFO` is enabled, select which modules to display version information for:
+
+<Accordion title="Available Info Modules">
+  - **INFO_ICONV** (default: y) - Display libiconv version
+  - **INFO_PNG** (default: y) - Display libpng version
+  - **INFO_JPEG** (default: y) - Display libjpeg version
+  - **INFO_TIFF** (default: y) - Display libtiff version
+  - **INFO_VTK** (default: y) - Display VTK version
+  - **INFO_ITK** (default: y) - Display ITK version
+  - **INFO_DCMTK** (default: y) - Display DCMTK version
+  - **INFO_OPENJPG** (default: y) - Display OpenJPEG version
+  - **INFO_JASPER** (default: n) - Display Jasper version
+  - **INFO_GLEW** (default: n) - Display GLEW version
+  - **INFO_GLM** (default: n) - Display GLM version
+</Accordion>
+
+---
+
+## Configure Options
+
+<ParamField path="CONFIGURE" type="boolean" default="y">
+  Master switch to run configuration scripts for modules before building.
+</ParamField>
+
+### Configure Modules
+
+<AccordionGroup>
+  <Accordion title="Libraries">
+    <ParamField path="CONFIGURE_LIB_ICONV" type="boolean" default="y">
+      Configure libiconv with `./configure` script.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_LIB_OPENSSL" type="boolean" default="y">
+      Configure OpenSSL library.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_LIB_PNG" type="boolean" default="y">
+      Configure libpng using CMake.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_LIB_JPEG" type="boolean" default="y">
+      Configure libjpeg.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_LIB_TIFF" type="boolean" default="y">
+      Configure libtiff with CMake.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_LIB_XML2" type="boolean" default="y">
+      Configure libxml2.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_ZLIB" type="boolean" default="y">
+      Configure zlib compression library.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Toolkits">
+    <ParamField path="CONFIGURE_VTK" type="boolean" default="y">
+      Configure VTK (Visualization Toolkit) with CMake.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_ITK" type="boolean" default="y">
+      Configure ITK (Insight Toolkit) with CMake.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_DCMTK" type="boolean" default="y">
+      Configure DCMTK (DICOM Toolkit) with CMake.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_OPENJPG" type="boolean" default="y">
+      Configure OpenJPEG library.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_JASPER" type="boolean" default="y">
+      Configure Jasper JPEG-2000 library.
+    </ParamField>
+
+    <ParamField path="CONFIGURE_GLEW" type="boolean" default="n">
+      Configure GLEW (OpenGL Extension Wrangler).
+    </ParamField>
+
+    <ParamField path="CONFIGURE_GLM" type="boolean" default="n">
+      Configure GLM (OpenGL Mathematics).
+    </ParamField>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Build Options
+
+<ParamField path="BUILD" type="boolean" default="y">
+  Master switch to compile and build modules.
+</ParamField>
+
+### Build Modules
+
+<AccordionGroup>
+  <Accordion title="Core Libraries">
+    <ParamField path="COMPILE_LIB_ICONV" type="boolean" default="y">
+      Build and install libiconv.
+    </ParamField>
+
+    <ParamField path="COMPILE_LIB_OPENSSL" type="boolean" default="y">
+      Build and install OpenSSL.
+    </ParamField>
+
+    <ParamField path="COMPILE_LIB_PNG" type="boolean" default="y">
+      Build and install libpng.
+    </ParamField>
+
+    <ParamField path="COMPILE_LIB_JPEG" type="boolean" default="y">
+      Build and install libjpeg.
+    </ParamField>
+
+    <ParamField path="COMPILE_ZLIB" type="boolean" default="y">
+      Build and install zlib.
+    </ParamField>
+
+    <ParamField path="COMPILE_LIB_XML2" type="boolean" default="y">
+      Build and install libxml2.
+    </ParamField>
+
+    <ParamField path="COMPILE_LIB_TIFF" type="boolean" default="y">
+      Build and install libtiff.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="VTK - Visualization Toolkit">
+    <ParamField path="COMPILE_VTK" type="boolean" default="y">
+      Build VTK framework for 3D visualization.
+    </ParamField>
+
+    <ParamField path="COLLAPSE_VTK" type="boolean" default="y">
+      Combine all VTK static libraries into a single `libVTK.a` library for easier linking.
+      
+      **Depends on:** `COMPILE_VTK`
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="ITK - Insight Toolkit">
+    <ParamField path="BUILD_ITK" type="boolean" default="y">
+      Build ITK framework for medical image processing.
+    </ParamField>
+
+    <ParamField path="COLLAPSE_ITK" type="boolean" default="y">
+      Combine all ITK static libraries into a single `libITK.a` library.
+      
+      **Depends on:** `BUILD_ITK`
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="DCMTK - DICOM Toolkit">
+    <ParamField path="COMPILE_DCMTK" type="boolean" default="y">
+      Build DCMTK for DICOM medical imaging support.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Image Codecs">
+    <ParamField path="BUILD_OPENJPG" type="boolean" default="y">
+      Build OpenJPEG library.
+    </ParamField>
+
+    <ParamField path="BUILD_JASPER" type="boolean" default="y">
+      Build and install Jasper.
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Graphics">
+    <ParamField path="COMPILE_GLEW" type="boolean" default="n">
+      Build and install GLEW.
+    </ParamField>
+
+    <ParamField path="BUILD_GLM" type="boolean" default="n">
+      Build GLM.
+    </ParamField>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Install Options
+
+<ParamField path="INSTALL" type="boolean" default="y">
+  Master switch for installation and post-processing steps.
+</ParamField>
+
+### Install Modules
+
+<AccordionGroup>
+  <Accordion title="DCMTK Installation">
+    <ParamField path="INSTALL_DCMTK" type="boolean" default="y">
+      Install DCMTK to the BIN directory.
+    </ParamField>
+
+    <ParamField path="POST_INSTALL_DCMTK" type="boolean" default="y">
+      Perform post-installation processing for DCMTK. This copies additional headers and patches configuration files.
+      
+      <Note>
+        Do this once when new DCMTK sources are updated.
+      </Note>
+      
+      **Depends on:** `INSTALL_DCMTK`
+    </ParamField>
+
+    <ParamField path="COLLAPSE_DCMTK" type="boolean" default="y">
+      Combine all DCMTK static libraries into a single `libDCMTK.a` library.
+      
+      **Depends on:** `INSTALL_DCMTK`
+    </ParamField>
+  </Accordion>
+
+  <Accordion title="Other Modules">
+    <ParamField path="INSTALL_OPENJPG" type="boolean" default="y">
+      Install OpenJPEG and copy additional headers.
+    </ParamField>
+
+    <ParamField path="INSTALL_GLM" type="boolean" default="n">
+      Install GLM headers and libraries.
+    </ParamField>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Symlink Options
+
+Symbolic links connect the compiled libraries in the BIN directory to the Miele-LXIV application's `Binaries` directory, making them available to the Xcode project.
+
+<ParamField path="REMOVE_SYMLINKS" type="boolean" default="n">
+  Remove all symbolic links from the Binaries directory.
+</ParamField>
+
+<ParamField path="CREATE_SYMLINKS" type="boolean" default="n">
+  Create symbolic links in the Binaries directory pointing to installed modules.
+</ParamField>
+
+### Create Symlinks Modules
+
+When `CREATE_SYMLINKS` is enabled:
+
+<AccordionGroup>
+  <Accordion title="Unzip and Link Modules">
+    <ParamField path="UNZIP_BINARIES" type="boolean" default="y">
+      Unzip pre-compiled binaries before creating symlinks.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_JPEG" type="boolean" default="y">
+      Create symlink for libjpeg.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_TIFF" type="boolean" default="y">
+      Create symlink for libtiff.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_XML2" type="boolean" default="y">
+      Create symlink for libxml2.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_ZLIB" type="boolean" default="y">
+      Create symlink for zlib.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_VTK" type="boolean" default="y">
+      Create symlink for VTK.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_ICONV" type="boolean" default="y">
+      Create symlink for libiconv.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_ITK" type="boolean" default="y">
+      Create symlink for ITK.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_DCMTK" type="boolean" default="y">
+      Create symlink for DCMTK.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_OPENJPG" type="boolean" default="y">
+      Create symlink for OpenJPEG.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_OPENSSL" type="boolean" default="y">
+      Create symlink for OpenSSL.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_PNG" type="boolean" default="y">
+      Create symlink for libpng.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_JASPER" type="boolean" default="y">
+      Create symlink for Jasper.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_GLEW" type="boolean" default="n">
+      Create symlink for GLEW.
+    </ParamField>
+
+    <ParamField path="CREATE_SYMLINKS_GLM" type="boolean" default="n">
+      Create symlink for GLM.
+    </ParamField>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Configuration Tips
+
+<Note>
+  **Typical Workflow**: Enable options in sequence:
+  1. First run: Enable **Download** only
+  2. Second run: Enable **Configure**, **Build**, and **Install**
+  3. Final run: Enable **Create Symbolic links**
+</Note>
+
+<Warning>
+  Changing configuration options may require rebuilding modules. The build script detects existing directories and skips downloads/builds if already present.
+</Warning>
+
+## Related Pages
+
+- [Version Sets](/configuration/version-sets) - Learn about predefined library version configurations
+- [Directory Structure](/configuration/directories) - Understand the SRC, BLD, and BIN directory organization

@@ -1,0 +1,139 @@
+---
+title: "Step 1: Initial Configuration"
+description: Configure the build system for the first time using kconfig-mconf
+---
+
+## Overview
+
+The first step sets up your build environment by creating the initial configuration file (`seed.conf`) and defining the three main directory locations:
+
+- **SRC**: Where source files will be downloaded
+- **BLD**: Where temporary build files will be stored  
+- **BIN**: Where compiled libraries will be installed
+
+<Warning>
+This is a **once-only** configuration step. You only need to run this when setting up Miele-LXIV Easy for the first time.
+</Warning>
+
+## Running the Configuration
+
+<Steps>
+  <Step title="Navigate to EASY_HOME">
+    Open Terminal and navigate to the directory where you downloaded/cloned Miele-LXIV Easy:
+    
+    ```bash
+    cd $EASY_HOME
+    ```
+    
+    Replace `$EASY_HOME` with the actual path to your Miele-LXIV Easy directory.
+  </Step>
+  
+  <Step title="Run the build script">
+    Since `seed.conf` doesn't exist yet, running `build.sh` will automatically launch the configuration interface:
+    
+    ```bash
+    ./build.sh
+    ```
+  </Step>
+  
+  <Step title="Configure your settings">
+    The kconfig-mconf interface will appear. Here you can:
+    
+    - Review and accept the default directory paths (recommended)
+    - Or define your own custom paths if needed
+    - Select your version set file (use the default unless you have specific requirements)
+    
+    <Info>
+    **Recommendation**: If you're setting up for the first time, accept all defaults to get a tried and tested configuration.
+    </Info>
+    
+    ![Configuration Menu](/images/step1.png)
+  </Step>
+  
+  <Step title="Save and exit">
+    Navigate through the menu and:
+    
+    1. Select **Save**
+    2. Confirm with **Ok**  
+    3. Select **Exit**
+    4. Confirm **Exit** again
+  </Step>
+</Steps>
+
+## What Happens
+
+When you complete this step:
+
+1. The `seed.conf` file is created in `$EASY_HOME`
+2. A `log/` directory is created for capturing build logs
+3. Your directory paths and version selections are saved
+4. A timestamp is appended to the configuration
+
+## The kconfig-mconf Interface
+
+The configuration interface uses the same tool that Linux uses for kernel configuration. It provides:
+
+- **Navigation**: Use arrow keys to move through options
+- **Selection**: Press Space to toggle options, Enter to select menus
+- **Help**: Press `?` on any option to see detailed help text
+- **Save**: Writes your configuration to files
+- **Exit**: Leaves the configuration interface
+
+## Configuration File Location
+
+After completion, you'll find:
+
+```
+$EASY_HOME/
+├── seed.conf          # Your configuration settings
+├── log/              # Directory for build logs
+└── build.sh          # Main build script
+```
+
+## Verifying Configuration
+
+You can verify your configuration was created successfully:
+
+```bash
+cat seed.conf
+```
+
+You should see entries for your SRC, BLD, and BIN directories, along with a timestamp.
+
+## Common Settings
+
+<AccordionGroup>
+  <Accordion title="Directory Paths">
+    The configuration will ask you to define:
+    
+    - `CONFIG_SRC_DIR`: Source directory path
+    - `CONFIG_BLD_DIR`: Build directory path
+    - `CONFIG_BIN_DIR`: Install/binaries directory path
+    
+    These can be relative or absolute paths.
+  </Accordion>
+  
+  <Accordion title="Version Set">
+    The version set file defines which versions of all third-party libraries will be downloaded and built. The default version set has been tested and is recommended.
+  </Accordion>
+  
+  <Accordion title="Generator">
+    Choose between Xcode (recommended) or Unix Makefiles as the CMake generator.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Warning>
+If you see "Please install kconfig-mconf", you need to install the kconfig-mconf tool first. See the [Prerequisites Guide](/prerequisites#kconfig-mconf).
+</Warning>
+
+<Warning>
+If you see "Please install the command-line cmake", install cmake via Homebrew or from the CMake.app package. See the [Prerequisites Guide](/prerequisites#cmake).
+</Warning>
+
+## Next Step
+
+<Card title="Step 2: Download Sources" icon="arrow-right" href="/setup/step2-download">
+  Now that your build environment is configured, proceed to download the third-party library sources.
+</Card>

@@ -1,0 +1,360 @@
+---
+title: reconfigure.sh Reference
+description: Reference for the reconfiguration script that launches the interactive menu system
+---
+
+## Overview
+
+The `reconfigure.sh` script launches an interactive menu-based interface for selecting which build steps to execute. It uses the `kconfig-mconf` tool to provide a terminal UI similar to Linux kernel configuration.
+
+## Usage
+
+```bash
+./reconfigure.sh
+```
+
+No command-line arguments are required.
+
+## Script Contents
+
+```bash reconfigure.sh:1-8
+#!/bin/bash
+
+# Alex Bettarini - 15 Mar 2019
+
+export CONFIG_=STEP_
+export KCONFIG_CONFIG=steps.conf
+kconfig-mconf Kconfig-miele
+```
+
+## How It Works
+
+### 1. Set Configuration Prefix
+
+```bash
+export CONFIG_=STEP_
+```
+
+This environment variable tells `kconfig-mconf` to prefix all configuration variables with `STEP_`. For example, a menu option `DOWNLOAD_SOURCES_DCMTK` becomes `STEP_DOWNLOAD_SOURCES_DCMTK` in the output file.
+
+### 2. Set Configuration File
+
+```bash
+export KCONFIG_CONFIG=steps.conf
+```
+
+Specifies that configuration values should be saved to `steps.conf`.
+
+### 3. Launch Menu Interface
+
+```bash
+kconfig-mconf Kconfig-miele
+```
+
+Launches the interactive menu using the configuration structure defined in `Kconfig-miele`.
+
+## Interactive Menu
+
+When you run `reconfigure.sh`, you'll see a terminal-based menu interface:
+
+```
+┌─── Miele-LXIV - 3rd Party Modules Configuration ───┐
+│  Arrow keys navigate the menu.                      │
+│  <Enter> selects submenus and options.             │
+│  Highlighted letters are hotkeys.                   │
+│  Pressing <Y> selects a feature, <N> excludes it.  │
+│  Press <Esc> or <?> for Help, </> for Search.      │
+│  Legend: [*] feature is selected  [ ] unselected   │
+│                                                     │
+│  [ ] Download sources                              │
+│  [ ] Show version information                      │
+│  [*] Configure                                     │
+│  [*] Build                                         │
+│  [*] Install                                       │
+│  [ ] Remove Symbolic links                         │
+│  [ ] Create Symbolic links                         │
+│                                                     │
+│          <Select>    < Exit >    < Help >          │
+└────────────────────────────────────────────────────┘
+```
+
+## Menu Navigation
+
+### Keyboard Controls
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate menu items |
+| `Enter` | Select item / Enter submenu |
+| `Space` | Toggle checkbox |
+| `Y` | Select (enable) current option |
+| `N` | Deselect (disable) current option |
+| `?` | Show help |
+| `/` | Search for option |
+| `Esc` | Go back / Exit |
+| `Tab` | Move between menu and buttons |
+
+### Selection States
+
+- `[ ]` - Option is disabled (will not run)
+- `[*]` - Option is enabled (will run)
+- `< >` - Choice (only one can be selected)
+- `<*>` - Selected choice
+
+## Configuration Output
+
+The menu selections are saved to `steps.conf` in the following format:
+
+```bash
+#
+# Automatically generated file; DO NOT EDIT.
+# Miele-LXIV - 3rd Party Modules Configuration
+#
+# STEP_DOWNLOAD is not set
+# STEP_INFO is not set
+STEP_CONFIGURE=y
+STEP_CONFIGURE_LIB_ICONV=y
+STEP_CONFIGURE_LIB_OPENSSL=y
+STEP_CONFIGURE_LIB_PNG=y
+STEP_CONFIGURE_LIB_JPEG=y
+STEP_CONFIGURE_LIB_TIFF=y
+# ... etc
+```
+
+### Variable Format
+
+- **Enabled option**: `STEP_<OPTION>=y`
+- **Disabled option**: `# STEP_<OPTION> is not set`
+- **String value**: `STEP_<OPTION>="value"`
+
+## Menu Structure
+
+The menu is organized into major phases:
+
+### 1. Download Sources
+
+Controls which packages to download:
+
+```
+[*] Download sources  --->
+    [*] OpenSSL
+    [*] iconv
+    [*] lib png
+    [*] lib z
+    [*] lib xml2
+    [*] lib jpeg
+    [*] lib tiff
+    [*] VTK
+    [*] ITK
+    [*] DCMTK
+        [*] patch DCMTK
+    [*] OpenJPEG
+        [*] patch OPENJPG
+    [*] Jasper
+    [ ] GLEW
+    [ ] GML
+    [*] APP
+```
+
+### 2. Show Version Information
+
+Controls which packages to show version info for:
+
+```
+[ ] Show version information  --->
+    [*] ICONV
+    [*] PNG
+    [*] JPEG
+    [*] TIFF
+    [*] VTK
+    [*] ITK
+    [*] DCMTK
+    [*] OpenJPEG
+    [ ] Jasper
+    [ ] GLEW
+    [ ] GLM
+```
+
+### 3. Configure
+
+Controls which packages to configure:
+
+```
+[*] Configure  --->
+    [*] lib ICONV
+    [*] lib OpenSSL
+    [*] lib PNG
+    [*] lib JPEG
+    [*] lib TIFF
+    [*] lib XML2
+    [*] lib Z
+    [*] VTK
+    [*] ITK
+    [*] DCMTK
+    [*] OpenJPEG
+    [*] Jasper
+    [ ] GLEW
+    [ ] GLM
+```
+
+### 4. Build
+
+Controls which packages to build and install:
+
+```
+[*] Build  --->
+    [*] Build and install lib ICONV
+    [*] Build and install lib OpenSSL
+    [*] Build and install lib PNG
+    [*] Build and install lib JPEG
+    [*] Build and install lib Z
+    [*] Build and install lib XML2
+    [*] Build and install lib TIFF
+    [*] Build VTK
+        [*] Single VTK library
+    [*] Build ITK
+        [*] Single ITK library
+    [*] Build DCMTK
+    [*] Build OpenJPEG
+    [*] Build and install Jasper
+    [ ] Build and install GLEW
+    [ ] Build GLM
+```
+
+### 5. Install
+
+Controls post-build installation steps:
+
+```
+[*] Install  --->
+    [*] Install DCMTK
+        [*] Post-Processing installed DCMTK
+        [*] Single DCMTK library
+    [*] Install OpenJPEG
+    [ ] Install GLM
+```
+
+### 6. Symbolic Links
+
+Controls creation of symbolic links in the application's Binaries directory:
+
+```
+[ ] Create Symbolic links  --->
+    [*] Unzip binaries
+    [*] JPEG
+    [*] TIFF
+    [*] XML2
+    [*] ZLIB
+    [*] VTK
+    [*] ICONV
+    [*] ITK
+    [*] DCMTK
+    [*] OpenJPG
+    [*] OpenSSL
+    [*] PNG
+    [*] Jasper
+    [ ] GLEW
+    [ ] GLM
+```
+
+## Common Workflows
+
+### First Time Build
+
+Enable all options:
+
+1. Run `./reconfigure.sh`
+2. Enable `[*] Download sources`
+3. Enable `[*] Configure`
+4. Enable `[*] Build`
+5. Enable `[*] Install`
+6. Enable `[*] Create Symbolic links`
+7. Select `< Exit >` and save
+
+### Rebuild Single Package
+
+To rebuild just DCMTK:
+
+1. Run `./reconfigure.sh`
+2. Disable `[ ] Download sources`
+3. Disable `[ ] Configure` (if already configured)
+4. Enable `[*] Build`
+5. Enter Build submenu
+6. Disable all except `[*] Build DCMTK`
+7. Enable `[*] Install`
+8. Enter Install submenu
+9. Enable `[*] Install DCMTK`
+10. Select `< Exit >` and save
+
+### Clean Rebuild
+
+To start fresh:
+
+1. Delete build directories manually
+2. Run `./reconfigure.sh`
+3. Enable Configure and Build for needed packages
+4. Select `< Exit >` and save
+
+### Update Dependencies Only
+
+1. Run `./reconfigure.sh`
+2. Enable `[*] Download sources`
+3. Disable `[ ] Build`
+4. Disable `[ ] Install`
+5. Select `< Exit >` and save
+
+## Dependencies
+
+Some options depend on others. For example:
+
+- "patch DCMTK" is only available if "DCMTK" download is enabled
+- "Single VTK library" requires "Build VTK" to be enabled
+- "Post-Processing installed DCMTK" requires "Install DCMTK" to be enabled
+
+The menu system automatically shows/hides dependent options.
+
+## Configuration File Format
+
+The generated `steps.conf` is a simple shell script that can be sourced by `build.sh`. It contains:
+
+```bash
+# Header comment
+#
+# Automatically generated file; DO NOT EDIT.
+# Miele-LXIV - 3rd Party Modules Configuration
+#
+
+# Disabled options (comments)
+# STEP_DOWNLOAD is not set
+
+# Enabled options (shell variables)
+STEP_CONFIGURE=y
+STEP_BUILD=y
+
+# Nested options
+STEP_CONFIGURE_VTK=y
+STEP_BUILD_VTK=y
+STEP_COLLAPSE_VTK=y
+```
+
+## Modifying Configuration Files
+
+While `steps.conf` includes a "DO NOT EDIT" warning, you can:
+
+1. **Use the menu** (recommended): Run `./reconfigure.sh`
+2. **Edit manually** (advanced): Modify `steps.conf` directly
+   - Set `STEP_<OPTION>=y` to enable
+   - Set `# STEP_<OPTION> is not set` to disable
+   - Or simply delete the line to disable
+
+Manual edits are overwritten if you run `reconfigure.sh` again.
+
+## Kconfig Structure
+
+The menu structure is defined in `Kconfig-miele`. See [Kconfig Configuration](/reference/kconfig) for details on the configuration language and structure.
+
+## See Also
+
+- [build.sh Reference](/reference/build-script) - Main build script
+- [Kconfig Configuration](/reference/kconfig) - Configuration structure
+- [seed.conf Reference](/reference/seed-conf) - Directory and generator settings

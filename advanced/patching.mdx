@@ -1,0 +1,188 @@
+---
+title: Patching Dependencies
+description: Understanding and managing patches for Miele-LXIV compatibility
+---
+
+## Overview
+
+Some dependencies require modifications to work correctly with Miele-LXIV. The build system automatically applies patches during the download phase to ensure compatibility with the DICOM viewer's specific requirements.
+
+## Why Patches Are Needed
+
+Patches are necessary for Miele-LXIV compatibility for several reasons:
+
+- **DCMTK modifications**: Add support for JPEG 2000 modes and handle GE private DICOM groups
+- **OpenJPEG enhancements**: Add `fmemopen` support for macOS compatibility
+- **Platform-specific fixes**: Resolve macOS-specific compilation and runtime issues
+- **Feature additions**: Enable features not available in standard library versions
+
+## Available Patches
+
+The build system includes patches in the `patch/` directory:
+
+### DCMTK Patches
+
+```
+dcmtk-3.6.2_miele-7.1.38.patch
+dcmtk-3.6.4_miele-7.3.46.patch
+dcmtk-3.6.5_miele-easy-8.4.62.patch
+```
+
+**Key modifications:**
+- Adds `#undef verify` macro to prevent conflicts with macOS AssertMacros.h
+- Implements GE private group (0x0009, 0x1110) handling for compressed pixel data
+- Adds JPEG 2000 lossy/lossless mode enumeration (`EJM_JP2K_lossy`, `EJM_JP2K_lossless`)
+- Enforces `FOR_MIELE_LXIV` compilation flag
+
+### OpenJPEG Patches
+
+```
+openjpeg-2.2.0_miele-7.1.38.patch
+openjpeg-2.3.1_miele-easy-8.4.62.patch
+```
+
+**Key modifications:**
+- Adds `fmemopen.c` and `fmemopen.h` for memory stream support on macOS
+- Updates CMakeLists.txt to include new source files
+- Provides compatibility layer for platforms lacking native `fmemopen`
+
+<Warning>
+Patches are version-specific. Using a patch with the wrong library version will fail. The patch filename indicates the exact library version and Miele-LXIV release it targets.
+</Warning>
+
+## Patch Naming Convention
+
+Patch files follow this naming pattern:
+
+```
+<library>-<version>_<project>-<project-version>.patch
+```
+
+**Examples:**
+- `dcmtk-3.6.5_miele-easy-8.4.62.patch` - DCMTK 3.6.5 for Miele Easy 8.4.62
+- `openjpeg-2.3.1_miele-easy-8.4.62.patch` - OpenJPEG 2.3.1 for Miele Easy 8.4.62
+
+## When Patches Are Applied
+
+Patches are applied automatically during the download phase:
+
+1. **Download configuration** - Enable in `kconfig-mconf`:
+   ```bash
+   $ ./reconfigure.sh
+   # Enable "Download sources" → "DCMTK" → "patch DCMTK"
+   # Enable "Download sources" → "OpenJPEG" → "patch OPENJPG"
+   ```
+
+2. **Automatic detection** - The build script checks for patch files:
+   ```bash
+   PATCH_FILENAME=${DCMTK}_${MIELE}.patch
+   if [ -f $PATCH_DIR/$PATCH_FILENAME ] ; then
+       patch -p1 -i $PATCH_DIR/$PATCH_FILENAME
+   fi
+   ```
+
+3. **Application** - Patches modify source files before compilation
+
+<Warning>
+Patched packages cannot be shared with other projects. They are always placed in timestamped directories (`$SRC_DIR/$TIMESTAMP`), even when `CONFIG_SHARED_SOURCES` is enabled.
+</Warning>
+
+## Creating Custom Patches
+
+If you need to create your own patches for newer library versions:
+
+<Steps>
+  <Step title="Download and extract the library">
+    Download the original library source without modifications:
+    ```bash
+    cd $SRC
+    wget https://dicom.offis.de/download/dcmtk/dcmtk367/dcmtk-3.6.7.tar.gz
+    tar -zxf dcmtk-3.6.7.tar.gz
+    cp -r dcmtk-3.6.7 dcmtk-3.6.7.original
+    ```
+  </Step>
+
+  <Step title="Make your modifications">
+    Edit the files in the working copy (not the `.original` directory):
+    ```bash
+    cd dcmtk-3.6.7
+    # Edit files as needed
+    vim dcmdata/include/dcmtk/dcmdata/dcobject.h
+    ```
+  </Step>
+
+  <Step title="Generate the patch file">
+    Create a unified diff patch:
+    ```bash
+    cd $SRC
+    diff -rupN -x .git dcmtk-3.6.7.original dcmtk-3.6.7 > \
+      $EASY_HOME/patch/dcmtk-3.6.7_miele-easy-<version>.patch
+    ```
+  </Step>
+
+  <Step title="Test the patch">
+    Verify the patch applies cleanly:
+    ```bash
+    cd dcmtk-3.6.7
+    patch --dry-run -p1 -i $EASY_HOME/patch/dcmtk-3.6.7_miele-easy-<version>.patch
+    ```
+  </Step>
+</Steps>
+
+## Viewing Patch Contents
+
+To understand what a patch changes:
+
+```bash
+less patch/dcmtk-3.6.5_miele-easy-8.4.62.patch
+```
+
+Patch files use unified diff format:
+- Lines starting with `-` are removed
+- Lines starting with `+` are added
+- Context lines show surrounding code
+
+## Troubleshooting Patch Issues
+
+**Patch fails to apply:**
+```
+patching file dcmdata/libsrc/dcdatset.cc
+Hunk #1 FAILED at 241.
+```
+
+**Solution:** The library version may have changed. You need to:
+1. Compare the patch with current source code
+2. Manually apply changes or create a new patch for this version
+3. Use the exact library version specified in the patch filename
+
+**Wrong patch version:**
+```
+can't find file to patch at input line 5
+```
+
+**Solution:** Verify you're using the correct library version. Check the version set configuration:
+```bash
+source seed.conf
+source $CONFIG_VERSION_SET
+echo $DCMTK_VERSION  # Should match patch filename
+```
+
+## Related Configuration
+
+Patch-related settings in build.sh:
+
+```bash
+PATCH_DIR=$EASY_HOME/patch           # Patch directory location
+SRC_DCMTK=$SRC_P/$DCMTK              # Patched packages use timestamped dir
+SRC_OPENJPG=$SRC_P/$OPENJPG          # Cannot be shared
+SRC_APP=$SRC_P/$MIELE                # Application also patched
+```
+
+## Best Practices
+
+- Always use the recommended library versions from the version set
+- Don't modify patches unless you understand the implications
+- Keep original patch files for reference
+- Document any custom patches you create
+- Test builds thoroughly after modifying patches
+- Back up working configurations before experimenting

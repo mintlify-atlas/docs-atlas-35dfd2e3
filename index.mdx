@@ -1,97 +1,232 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Miele-LXIV Easy"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#1E40AF] via-[#2563EB] to-[#3B82F6] dark:from-[#0f1117] dark:via-[#1a1d27] dark:to-[#1E40AF] py-20 border-b border-gray-200 dark:border-[#27272a]">
+  <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+  <div className="relative max-w-6xl mx-auto px-6 lg:px-8">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          Configure Miele-LXIV in 5 Easy Steps
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-100 dark:text-gray-300 max-w-2xl mb-8">
+          Automated build system that downloads, configures, and installs all dependencies for the Miele-LXIV medical imaging Xcode project.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/introduction"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-[#2563EB] font-semibold hover:bg-gray-100 transition-colors no-underline"
+          >
+            Get Started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a
+            href="/setup/overview"
+            className="inline-flex items-center px-6 py-3 rounded-lg border-2 border-white/30 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/50 transition-colors no-underline"
+          >
+            Setup Guide
+          </a>
+        </div>
+      </div>
+      <div className="hidden lg:block lg:col-span-5">
+        <div className="bg-white/10 dark:bg-[#1a1d27]/50 backdrop-blur-sm rounded-xl p-6 border border-white/20 dark:border-[#27272a]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          <div className="font-mono text-sm text-gray-100">
+            <div className="text-green-300">$ ./build.sh</div>
+            <div className="mt-2 text-gray-300">Configuring Miele-LXIV Easy...</div>
+            <div className="text-gray-300">✓ Download sources</div>
+            <div className="text-gray-300">✓ Build dependencies</div>
+            <div className="text-gray-300">✓ Install toolkits</div>
+            <div className="mt-2 text-blue-300">Ready to build!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Quick Start</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+      Get your Miele-LXIV development environment configured in minutes
+    </p>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  <Steps>
+    <Step title="Install Prerequisites">
+      Install required tools: kconfig-mconf, wget, and cmake. These tools are essential for configuration and building dependencies.
+      
+      ```bash
+      brew install cmake wget
+      # Install kconfig-mconf from NuttX tools
+      ```
+    </Step>
+    
+    <Step title="Run Initial Configuration">
+      Run the build script to create your initial configuration and set up directory structure.
+      
+      ```bash
+      cd $EASY_HOME
+      ./build.sh
+      ```
+      
+      <Note>
+        The first run will launch an interactive configuration menu. Accept the defaults for a tried-and-tested setup.
+      </Note>
+    </Step>
+    
+    <Step title="Download and Build Dependencies">
+      Configure download and build steps, then execute the build to compile all medical imaging libraries.
+      
+      ```bash
+      ./reconfigure.sh  # Enable download, configure, build, and install
+      ./build.sh        # This step takes about 1 hour
+      ```
+    </Step>
+    
+    <Step title="Create Symbolic Links">
+      Set up symbolic links to make the installed libraries available to the Xcode project.
+      
+      ```bash
+      ./reconfigure.sh  # Enable "Create Symbolic links"
+      ./build.sh
+      ```
+    </Step>
+  </Steps>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Key Features</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">
+      Everything you need to configure the Miele-LXIV Xcode project
+    </p>
+  </div>
 
-Design a docs site that looks great and empowers your users.
+  <CardGroup cols={2}>
+    <Card title="Interactive Configuration" icon="sliders" href="/configuration/options">
+      Use kconfig-mconf for an intuitive menu-driven configuration experience
+    </Card>
+    <Card title="Automated Downloads" icon="download" href="/setup/step2-download">
+      Automatically download all required medical imaging libraries and dependencies
+    </Card>
+    <Card title="Build Orchestration" icon="gear" href="/setup/step3-build">
+      Build and install DCMTK, VTK, ITK, and all supporting libraries with a single command
+    </Card>
+    <Card title="Multiple Version Sets" icon="code-branch" href="/configuration/version-sets">
+      Support for multiple Miele-LXIV versions: 7.1.38, 7.3.46, and 8.8
+    </Card>
+    <Card title="Patch Management" icon="file-code" href="/advanced/patching">
+      Automatically apply patches to DCMTK and OpenJPEG for Miele-LXIV compatibility
+    </Card>
+    <Card title="Xcode Integration" icon="hammer" href="/setup/step4-symlinks">
+      Seamless integration with Xcode through symbolic link management
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Managed Dependencies</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">
+      Complete toolkit for medical imaging development
+    </p>
+  </div>
 
-## Create beautiful pages
+  <CardGroup cols={3}>
+    <Card title="DCMTK" icon="file-medical" href="/dependencies/dcmtk">
+      DICOM Toolkit for medical image processing
+    </Card>
+    <Card title="VTK & ITK" icon="cube" href="/dependencies/vtk-itk">
+      Visualization and Insight Toolkits for 3D rendering
+    </Card>
+    <Card title="Image Libraries" icon="image" href="/dependencies/image-libraries">
+      JPEG, TIFF, PNG, OpenJPEG, and Jasper support
+    </Card>
+    <Card title="OpenGL" icon="sparkles" href="/dependencies/opengl">
+      GLEW and GLM for hardware-accelerated graphics
+    </Card>
+    <Card title="OpenSSL" icon="lock" href="/dependencies/overview">
+      Secure communication and encryption support
+    </Card>
+    <Card title="XML & Compression" icon="file-zipper" href="/dependencies/overview">
+      libxml2, zlib, and iconv for data handling
+    </Card>
+  </CardGroup>
+</div>
 
-Everything you need to create world-class documentation.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Explore the Documentation</h2>
+  </div>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a 
+      href="/setup/overview" 
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#2563EB] dark:hover:border-[#2563EB] overflow-hidden no-underline transition-colors bg-white dark:bg-[#1a1d27]"
+    >
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Setup Guide</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Follow our comprehensive 5-step guide to configure your entire development environment
+        </p>
+        <div className="flex items-center text-[#2563EB] group-hover:text-[#1E40AF] dark:group-hover:text-[#60A5FA] font-medium">
+          Read the guide
+          <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
 
-## Need inspiration?
+    <a 
+      href="/reference/build-script" 
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#2563EB] dark:hover:border-[#2563EB] overflow-hidden no-underline transition-colors bg-white dark:bg-[#1a1d27]"
+    >
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Command Reference</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Detailed reference for build.sh, reconfigure.sh, and all configuration options
+        </p>
+        <div className="flex items-center text-[#2563EB] group-hover:text-[#1E40AF] dark:group-hover:text-[#60A5FA] font-medium">
+          View reference
+          <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="bg-gradient-to-r from-[#2563EB] to-[#3B82F6] dark:from-[#1E40AF] dark:to-[#2563EB] rounded-2xl p-8 md:p-12 text-center border border-gray-200 dark:border-[#27272a]">
+    <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+    <p className="text-lg text-gray-100 dark:text-gray-200 mb-8 max-w-2xl mx-auto">
+      Set up your Miele-LXIV development environment in just a few minutes
+    </p>
+    <div className="flex flex-wrap justify-center gap-4">
+      <a
+        href="/prerequisites"
+        className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-[#2563EB] font-semibold hover:bg-gray-100 transition-colors no-underline"
+      >
+        View Prerequisites
+      </a>
+      <a
+        href="/installation"
+        className="inline-flex items-center px-6 py-3 rounded-lg border-2 border-white/30 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/50 transition-colors no-underline"
+      >
+        Installation Guide
+      </a>
+    </div>
+  </div>
+</div>

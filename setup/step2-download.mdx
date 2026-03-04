@@ -1,0 +1,184 @@
+---
+title: "Step 2: Download Sources"
+description: Download all third-party library sources required for Miele-LXIV
+---
+
+## Overview
+
+Step 2 downloads all required third-party library source code from various repositories. This includes DCMTK, VTK, ITK, and numerous support libraries. Patches are automatically applied where necessary.
+
+<Warning>
+This is a **once-only operation**. You only need to download sources once unless you're updating to new library versions.
+</Warning>
+
+## What Gets Downloaded
+
+The download step retrieves source archives for:
+
+- **DCMTK** - DICOM Toolkit (with Miele-LXIV patches)
+- **VTK** - Visualization Toolkit  
+- **ITK** - Insight Segmentation and Registration Toolkit
+- **OpenJPEG** - JPEG 2000 codec (with patches)
+- **OpenSSL** - Cryptography library
+- **libjpeg** - JPEG image library
+- **libpng** - PNG image library
+- **libtiff** - TIFF image library
+- **libxml2** - XML parsing library
+- **libiconv** - Character encoding conversion
+- **zlib** - Compression library
+- **GLEW** - OpenGL Extension Wrangler Library (optional)
+- **GLM** - OpenGL Mathematics library (optional)
+- **Jasper** - Image processing library
+- **Miele-LXIV** - The main application source code
+
+## Running the Download
+
+<Steps>
+  <Step title="Open the configuration menu">
+    From your `$EASY_HOME` directory, run:
+    
+    ```bash
+    ./reconfigure.sh
+    ```
+    
+    This launches the kconfig-mconf interface.
+  </Step>
+  
+  <Step title="Enable 'Download sources'">
+    In the configuration menu:
+    
+    1. Navigate to **"Download sources"**
+    2. Press Space to enable it (it should show `[*]`)
+    3. Optionally, enter the submenu to select which specific libraries to download (all are enabled by default)
+    4. Disable all other steps (Configure, Build, Install, etc.) if they're enabled
+  </Step>
+  
+  <Step title="Save and exit">
+    1. Select **Save**
+    2. Confirm with **Ok**
+    3. Select **Exit**  
+    4. Confirm **Exit** again
+    
+    ![Download configuration](/images/step2.png)
+  </Step>
+  
+  <Step title="Execute the download">
+    Run the build script to perform the downloads:
+    
+    ```bash
+    ./build.sh
+    ```
+    
+    The script will download each library's source archive and extract it to your configured SRC directory.
+  </Step>
+</Steps>
+
+## Expected Output
+
+As the script runs, you'll see output like:
+
+```bash
+SRC: /path/to/your/sources
+BLD: /path/to/your/build
+BIN: /path/to/your/install
+
+=== Download DCMTK
+=== Download VTK
+=== Download ITK
+...
+```
+
+## Patches Applied
+
+Some libraries receive Miele-LXIV specific patches:
+
+- **DCMTK**: Custom modifications for Miele-LXIV integration
+- **OpenJPEG**: Compatibility patches
+
+Patches are located in the `patch/` directory and are applied automatically during the download step.
+
+## Download Sources
+
+Libraries are downloaded from:
+
+- **DCMTK**: OFFIS DICOM server (dicom.offis.de)
+- **VTK/ITK**: Kitware repositories
+- **OpenJPEG**: uclouvain GitHub
+- **Image libraries**: Official project sites
+- **Miele-LXIV**: GitHub repository
+
+## Directory Structure After Download
+
+Your SRC directory will contain:
+
+```
+$SRC/
+├── dcmtk-3.6.x/
+├── VTK-9.x.x/
+├── InsightToolkit-5.x.x/
+├── openjpeg-x.x.x/
+├── openssl-x.x.x/
+├── libjpeg-x/
+├── libpng-x.x.x/
+├── libtiff-x.x.x/
+├── libxml2-vx.x.x/
+├── libiconv-x.x/
+├── zlib-x.x.x/
+└── miele-easy-x.x.x/
+```
+
+<Note>
+Actual version numbers depend on your version set configuration from Step 1.
+</Note>
+
+## Download Time
+
+**Estimated time**: 15-30 minutes depending on your internet connection
+
+Total download size is approximately 500MB-1GB of compressed source archives.
+
+## Verification
+
+Verify the downloads completed successfully:
+
+```bash
+ls -la $SRC
+```
+
+You should see directories for each library listed above.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="wget command not found">
+    Install wget using Homebrew:
+    
+    ```bash
+    brew install wget
+    ```
+  </Accordion>
+  
+  <Accordion title="Download fails or times out">
+    - Check your internet connection
+    - Some corporate networks may block certain download sites
+    - Try running the download step again - it will skip already downloaded files
+  </Accordion>
+  
+  <Accordion title="Patch application fails">
+    This usually means:
+    - The source version doesn't match the patch
+    - The patch was already applied
+    
+    Check the console output for specific patch errors.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<Warning>
+**Important**: Do NOT run the download step again unless you're intentionally updating library versions. Re-downloading will overwrite any patches that were applied.
+</Warning>
+
+<Card title="Step 3: Build and Install" icon="arrow-right" href="/setup/step3-build">
+  With all sources downloaded, you're ready to compile and install the libraries.
+</Card>

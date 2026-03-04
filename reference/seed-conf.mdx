@@ -1,0 +1,548 @@
+---
+title: seed.conf Reference
+description: Reference for the seed configuration file that defines directories and build settings
+---
+
+## Overview
+
+The `seed.conf` file contains one-time configuration settings that define where source code, build artifacts, and installed binaries are stored. It also specifies which CMake generator to use and which version set file to apply.
+
+## File Location
+
+The file is created in the build-steps directory:
+
+```
+miele-lxiv/
+└── doc/
+    └── build-steps/
+        ├── seed.sh           # Creates seed.conf
+        ├── seed.conf         # Generated configuration
+        ├── Kconfig-seed      # Menu structure
+        └── build.sh          # Uses seed.conf
+```
+
+## Creation
+
+The file is created by running `seed.sh`:
+
+```bash
+./seed.sh
+```
+
+This launches an interactive menu where you configure:
+- Directory paths
+- CMake generator
+- Version set file
+- Source sharing option
+
+If `seed.conf` doesn't exist, `build.sh` automatically runs `seed.sh` on first execution.
+
+## File Format
+
+```bash
+#
+# Automatically generated file; DO NOT EDIT.
+# Miele-LXIV - Once-only configuration
+#
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/Downloads/source"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+CONFIG_GENERATOR_MK=y
+# CONFIG_GENERATOR_XC is not set
+# CONFIG_SHARED_SOURCES is not set
+TIMESTAMP=miele-easy-20210615_1423
+```
+
+## Configuration Variables
+
+### Version Set Selection
+
+<ParamField path="CONFIG_VERSION_SET" type="string" required>
+  Path to the version set file that defines all package versions.
+  
+  **Default**: `version-set-8.8.conf`
+  
+  **Examples**:
+  - `version-set-9.0.conf`
+  - `version-set-8.8.conf`
+  - `version-set-7.3.46.conf`
+  - `version-set-7.1.38.conf`
+  - `version-set-custom.conf`
+</ParamField>
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+```
+
+This file is sourced by `build.sh`:
+
+```bash build.sh:34
+source $CONFIG_VERSION_SET
+```
+
+### Directory Paths
+
+<ParamField path="CONFIG_SRC_DIR" type="string" required>
+  Base directory for downloaded source code.
+  
+  **Default**: `~/Downloads/source`
+  
+  **Tilde expansion**: The `~` is expanded to your home directory by the build script.
+</ParamField>
+
+<ParamField path="CONFIG_BLD_DIR" type="string" required>
+  Base directory for build artifacts (CMake build directories).
+  
+  **Default**: `~/Documents/temp/build`
+  
+  **Note**: Can be large (several GB). Consider using a dedicated disk or partition.
+</ParamField>
+
+<ParamField path="CONFIG_BIN_DIR" type="string" required>
+  Base directory for installed binaries and libraries.
+  
+  **Default**: `~/Applications`
+  
+  **Note**: This is where compiled libraries are installed after building.
+</ParamField>
+
+```bash
+CONFIG_SRC_DIR="~/Downloads/source"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+```
+
+### Directory Structure
+
+The build script creates timestamped subdirectories:
+
+```bash build.sh:58-63
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP
+fi
+eval SRC_P=$CONFIG_SRC_DIR/$TIMESTAMP # patched packages
+```
+
+Resulting structure:
+
+```
+~/Downloads/source/
+└── miele-easy-20210615_1423/
+    ├── dcmtk-3.6.5/
+    ├── VTK-9.0.1/
+    ├── InsightToolkit-5.1.1/
+    └── ...
+
+~/Documents/temp/build/
+└── miele-easy-20210615_1423/
+    ├── dcmtk-3.6.5/
+    ├── VTK-9.0.1/
+    ├── InsightToolkit-5.1.1/
+    └── ...
+
+~/Applications/
+└── miele-easy-20210615_1423/
+    ├── dcmtk-3.6.5/
+    ├── VTK-9.0.1/
+    ├── InsightToolkit-5.1.1/
+    └── ...
+```
+
+### CMake Generator
+
+<ParamField path="CONFIG_GENERATOR_MK" type="boolean">
+  Use Unix Makefiles generator.
+  
+  **When set**: `GENERATOR="Unix Makefiles"`
+  
+  **Recommended for**: Command-line builds, CI/CD, automated builds
+</ParamField>
+
+<ParamField path="CONFIG_GENERATOR_XC" type="boolean">
+  Use Xcode generator.
+  
+  **When set**: `GENERATOR="Xcode"`
+  
+  **Recommended for**: Interactive development in Xcode IDE
+</ParamField>
+
+```bash
+# Unix Makefiles (default)
+CONFIG_GENERATOR_MK=y
+# CONFIG_GENERATOR_XC is not set
+
+# OR Xcode
+# CONFIG_GENERATOR_MK is not set
+CONFIG_GENERATOR_XC=y
+```
+
+Only one generator can be selected. The choice is exclusive:
+
+```kconfig Kconfig-seed:25-35
+choice
+    prompt "CMake generator"
+    default GENERATOR_MK
+    
+config GENERATOR_MK
+    bool "makefiles"
+
+config GENERATOR_XC
+    bool "Xcode"
+    
+endchoice
+```
+
+Usage in `build.sh`:
+
+```bash build.sh:36-40
+if [ $CONFIG_GENERATOR_XC ] ; then
+    GENERATOR="Xcode"
+elif [ $CONFIG_GENERATOR_MK ] ; then
+    GENERATOR="Unix Makefiles"
+fi
+```
+
+### Source Sharing
+
+<ParamField path="CONFIG_SHARED_SOURCES" type="boolean">
+  Reuse source code across multiple builds.
+  
+  **When enabled**: Unpatched packages are stored in `$CONFIG_SRC_DIR` (no timestamp subdirectory)
+  
+  **When disabled**: All sources go in `$CONFIG_SRC_DIR/$TIMESTAMP`
+  
+  **Default**: disabled (not set)
+  
+  **Benefit**: Saves disk space and download time if building multiple versions
+  
+  **Caveat**: Only safe for packages that don't require patching
+</ParamField>
+
+```bash
+# Shared sources enabled
+CONFIG_SHARED_SOURCES=y
+
+# Shared sources disabled (default)
+# CONFIG_SHARED_SOURCES is not set
+```
+
+How it works:
+
+```bash build.sh:58-79
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP
+fi
+eval SRC_P=$CONFIG_SRC_DIR/$TIMESTAMP # patched packages cannot be shared
+
+SRC_DCMTK=$SRC_P/$DCMTK  # patched - always timestamped
+SRC_GLEW=$SRC/$GLEW      # not patched - can be shared
+SRC_GLM=$SRC/$GLM        # not patched - can be shared
+SRC_ICONV=$SRC/$ICONV    # not patched - can be shared
+SRC_ITK=$SRC/$ITK        # not patched - can be shared
+SRC_JASPER=$SRC/$JASPER  # not patched - can be shared
+SRC_JPEG=$SRC/$JPEG      # not patched - can be shared
+SRC_OPENJPG=$SRC_P/$OPENJPG  # patched - always timestamped
+SRC_OPENSSL=$SRC/$OPENSSL    # not patched - can be shared
+SRC_PNG=$SRC/$PNG        # not patched - can be shared
+SRC_TIFF=$SRC/$TIFF      # not patched - can be shared
+SRC_VTK=$SRC/$VTK        # not patched - can be shared
+SRC_XML2=$SRC/$XML2      # not patched - can be shared
+SRC_ZLIB=$SRC/$ZLIB      # not patched - can be shared
+SRC_APP=$SRC_P/$MIELE    # patched - always timestamped
+```
+
+### Timestamp
+
+<ParamField path="TIMESTAMP" type="string">
+  Unique identifier for this build, appended by `build.sh` on first run.
+  
+  **Format**: `miele-easy-YYYYMMDD_HHMM`
+  
+  **Example**: `miele-easy-20210615_1423`
+  
+  **Purpose**: Isolates builds from each other
+</ParamField>
+
+```bash
+TIMESTAMP=miele-easy-20210615_1423
+```
+
+Added automatically:
+
+```bash build.sh:24-26
+if [ -f seed.conf ]; then
+    echo "TIMESTAMP=$APP-$(date +%Y%m%d_%H%M)" >> seed.conf
+fi
+```
+
+## seed.sh Script
+
+The script that creates `seed.conf`:
+
+```bash seed.sh:1-23
+#!/bin/bash
+
+# Alex Bettarini - 17 Mar 2019
+
+#-------------------------------------------------------------------------------
+# Once only, create symbolic links to patches to be reused
+
+PATCH_FILE1a=openjpeg-2.2.0_miele-7.1.38.patch
+PATCH_FILE1b=openjpeg-2.2.0_miele-7.3.46.patch
+
+pushd patch
+
+if [ ! -f ${PATCH_FILE1b} ]; then
+    ln -s ${PATCH_FILE1a} ${PATCH_FILE1b}
+fi
+
+popd
+
+#-------------------------------------------------------------------------------
+export CONFIG_=CONFIG_
+export KCONFIG_CONFIG=seed.conf
+kconfig-mconf Kconfig-seed
+```
+
+### Script Behavior
+
+1. **Create patch symlinks** - Links newer patch to older patch if they're identical
+2. **Set configuration prefix** - `CONFIG_=CONFIG_` (all variables prefixed with `CONFIG_`)
+3. **Set output file** - `KCONFIG_CONFIG=seed.conf`
+4. **Launch menu** - `kconfig-mconf Kconfig-seed`
+
+## Kconfig-seed Structure
+
+Defines the menu structure for `seed.sh`:
+
+```kconfig Kconfig-seed:1-44
+mainmenu "Miele-LXIV - Once-only configuration"
+
+#--------------------------
+config VERSION_SET
+    string "version numbers"
+    default "version-set-8.8.conf"
+    ---help---
+        Specify a set of version numbers which are known to work well together.
+        The number in the filename is the version number of the VTK package
+
+#--------------------------
+config SRC_DIR
+    string "sources directory"
+    default "~/Downloads/source"
+    
+config BLD_DIR
+    string "build directory"
+    default "~/Documents/temp/build"
+
+config BIN_DIR
+    string "install directory"
+    default "~/Applications"
+
+#-------------------------
+choice
+    prompt "CMake generator"
+    default GENERATOR_MK
+    
+config GENERATOR_MK
+    bool "makefiles"
+
+config GENERATOR_XC
+    bool "Xcode"
+    
+endchoice
+
+#-------------------------
+config SHARED_SOURCES
+    bool "Reuse available sources"
+    default n
+    ---help---
+        For modules that do not require patching, place them in
+        a shared parent directory, to avoid downloading them again.
+```
+
+## Interactive Menu
+
+When you run `seed.sh`, you see:
+
+```
+┌──── Miele-LXIV - Once-only configuration ────┐
+│                                               │
+│  (version-set-8.8.conf) version numbers      │
+│  (~/Downloads/source) sources directory      │
+│  (~/Documents/temp/build) build directory    │
+│  (~/Applications) install directory          │
+│      CMake generator (makefiles)  --->       │
+│  [ ] Reuse available sources                 │
+│                                               │
+│       <Select>    < Exit >    < Help >       │
+└──────────────────────────────────────────────┘
+```
+
+### Entering String Values
+
+For string options:
+
+1. Navigate to option
+2. Press `Enter`
+3. Type new value (or accept default)
+4. Press `Enter` to confirm
+
+### Selecting Generator
+
+For choice options:
+
+1. Navigate to "CMake generator"
+2. Press `Enter` to open submenu
+3. Select `makefiles` or `Xcode`
+4. Press `Exit`
+
+## Reconfiguration
+
+To change seed configuration:
+
+### Option 1: Re-run seed.sh
+
+```bash
+./seed.sh
+```
+
+This overwrites `seed.conf` with new settings.
+
+### Option 2: Edit Manually
+
+Edit `seed.conf` directly:
+
+```bash
+# Change version set
+CONFIG_VERSION_SET="version-set-custom.conf"
+
+# Change directories
+CONFIG_SRC_DIR="/Volumes/Storage/source"
+CONFIG_BLD_DIR="/Volumes/Storage/build"
+CONFIG_BIN_DIR="/Volumes/Storage/install"
+
+# Switch to Xcode
+# CONFIG_GENERATOR_MK is not set
+CONFIG_GENERATOR_XC=y
+
+# Enable shared sources
+CONFIG_SHARED_SOURCES=y
+```
+
+## Path Expansion
+
+The build script expands paths using `eval`:
+
+```bash build.sh:58-62
+if [ $CONFIG_SHARED_SOURCES ] ; then
+    eval SRC=$CONFIG_SRC_DIR
+else
+    eval SRC=$CONFIG_SRC_DIR/$TIMESTAMP
+fi
+```
+
+This handles:
+- **Tilde expansion**: `~/Downloads` → `/Users/username/Downloads`
+- **Environment variables**: `$HOME/source` → `/Users/username/source`
+- **Literal paths**: `/Volumes/Storage/source` → `/Volumes/Storage/source`
+
+## Common Configurations
+
+### Default Setup
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/Downloads/source"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+CONFIG_GENERATOR_MK=y
+# CONFIG_SHARED_SOURCES is not set
+```
+
+**Best for**: First-time users, standard builds
+
+### External Drive Setup
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="/Volumes/Storage/miele/source"
+CONFIG_BLD_DIR="/Volumes/Storage/miele/build"
+CONFIG_BIN_DIR="/Volumes/Storage/miele/install"
+CONFIG_GENERATOR_MK=y
+# CONFIG_SHARED_SOURCES is not set
+```
+
+**Best for**: Limited internal storage, large builds
+
+### Shared Sources Setup
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/SharedSource"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+CONFIG_GENERATOR_MK=y
+CONFIG_SHARED_SOURCES=y
+```
+
+**Best for**: Building multiple versions, saving disk space
+
+### Xcode Development Setup
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/Development/source"
+CONFIG_BLD_DIR="~/Development/build"
+CONFIG_BIN_DIR="~/Development/install"
+CONFIG_GENERATOR_XC=y
+# CONFIG_SHARED_SOURCES is not set
+```
+
+**Best for**: Interactive development, debugging in Xcode
+
+## Disk Space Considerations
+
+### Source Directory
+
+- **Size**: ~500 MB - 2 GB (compressed archives)
+- **Growth**: Grows with each build if not using shared sources
+- **Cleanup**: Can delete old timestamped directories
+
+### Build Directory
+
+- **Size**: ~5-20 GB (intermediate build files)
+- **Growth**: Largest directory; grows significantly with each build
+- **Cleanup**: Can delete entirely and rebuild from source
+
+### Install Directory
+
+- **Size**: ~2-5 GB (compiled libraries and headers)
+- **Growth**: Moderate; only final installed files
+- **Cleanup**: Can delete old timestamped directories; keep current version
+
+## Environment Variables
+
+Alternatively, you can override settings via environment variables:
+
+```bash
+export CONFIG_VERSION_SET="version-set-custom.conf"
+export CONFIG_SRC_DIR="/custom/source"
+export CONFIG_BLD_DIR="/custom/build"
+export CONFIG_BIN_DIR="/custom/install"
+./build.sh
+```
+
+This doesn't modify `seed.conf` but overrides its values for that run.
+
+## See Also
+
+- [build.sh Reference](/reference/build-script) - Main build script that uses seed.conf
+- [Version Sets](/reference/version-sets) - Version set file format and options
+- [Kconfig Configuration](/reference/kconfig) - Menu structure and configuration language
+- [reconfigure.sh Reference](/reference/reconfigure-script) - Build step configuration

@@ -1,0 +1,207 @@
+---
+title: "Step 4: Create Symbolic Links"
+description: Set up the Binaries directory with symbolic links to installed libraries
+---
+
+## Overview
+
+Step 4 creates symbolic links in the Miele-LXIV Xcode project's `Binaries` directory that point to the libraries you built and installed in Step 3. This allows the Xcode project to reference the compiled libraries without hardcoding absolute paths.
+
+## Why Symbolic Links?
+
+The Miele-LXIV Xcode project expects to find third-party libraries in its `Binaries` directory. Rather than copying the installed libraries (which would duplicate gigabytes of data), we create symbolic links that point to the actual installation location.
+
+This approach:
+
+- Saves disk space (no duplication)
+- Makes updates easier (update once, link points to new version)
+- Keeps the Xcode project portable
+- Allows multiple projects to share the same library installations
+
+## Binaries Directory Structure
+
+After this step, the structure will be:
+
+```
+Miele_LXIV.xcodeproj/
+└── Binaries/
+    ├── DCMTK -> /path/to/BIN/dcmtk-3.6.x
+    ├── VTK -> /path/to/BIN/VTK-9.x.x
+    ├── ITK -> /path/to/BIN/InsightToolkit-5.x.x
+    ├── openjpeg -> /path/to/BIN/openjpeg-x.x.x
+    ├── openssl -> /path/to/BIN/openssl-x.x.x
+    ├── libjpeg -> /path/to/BIN/jpeg-x
+    ├── libpng -> /path/to/BIN/libpng-x.x.x
+    ├── libtiff -> /path/to/BIN/tiff-x.x.x
+    ├── libxml2 -> /path/to/BIN/libxml2-vx.x.x
+    ├── libiconv -> /path/to/BIN/libiconv-x.x
+    ├── zlib -> /path/to/BIN/zlib-x.x.x
+    ├── Jasper -> /path/to/BIN/jasper-x.x.x
+    ├── GLEW -> /path/to/BIN/glew-x.x.x
+    └── GLM -> /path/to/BIN/glm-x.x.x
+```
+
+## Running the Symlink Creation
+
+<Steps>
+  <Step title="Open the configuration menu">
+    From your `$EASY_HOME` directory:
+    
+    ```bash
+    ./reconfigure.sh
+    ```
+  </Step>
+  
+  <Step title="Enable 'Create Symbolic links'">
+    In the kconfig-mconf interface:
+    
+    1. **Disable** all other steps (Download, Configure, Build, Install)
+    2. **Enable** "Create Symbolic links"
+    3. Optionally enter the submenu to select which specific libraries to link (all are recommended)
+    
+    ![Symbolic links configuration](/images/step4.png)
+  </Step>
+  
+  <Step title="Configure Unzip Binaries">
+    Within the "Create Symbolic links" submenu:
+    
+    1. Ensure **"Unzip binaries"** is enabled
+    2. This extracts pre-compiled binaries that ship with Miele-LXIV
+    3. All library options should be enabled (JPEG, TIFF, XML2, ZLIB, VTK, ITK, DCMTK, etc.)
+  </Step>
+  
+  <Step title="Save and exit">
+    1. Select **Save**
+    2. Confirm with **Ok**
+    3. Select **Exit**
+    4. Confirm **Exit** again
+  </Step>
+  
+  <Step title="Execute the symlink creation">
+    Run the build script:
+    
+    ```bash
+    ./build.sh
+    ```
+    
+    This will:
+    - Unzip the bundled Binaries if needed
+    - Create symbolic links for each enabled library
+  </Step>
+</Steps>
+
+## What Gets Linked
+
+The script creates symbolic links for:
+
+### Core Libraries (always needed)
+- **DCMTK** - DICOM functionality
+- **VTK** - Visualization
+- **ITK** - Image processing
+- **libjpeg** - JPEG support
+- **libpng** - PNG support
+- **libtiff** - TIFF support
+- **libxml2** - XML parsing
+- **libiconv** - Character encoding
+- **zlib** - Compression
+- **OpenSSL** - Cryptography
+- **OpenJPEG** - JPEG 2000
+- **Jasper** - Image formats
+
+### Optional Libraries
+- **GLEW** - OpenGL extensions
+- **GLM** - OpenGL mathematics
+
+## Verifying the Links
+
+After the script completes, verify the symbolic links were created:
+
+```bash
+ls -la $SRC_APP/Binaries/
+```
+
+You should see output like:
+
+```bash
+lrwxr-xr-x  1 user  staff  45 Mar  4 10:30 DCMTK -> /path/to/install/dcmtk-3.6.7
+lrwxr-xr-x  1 user  staff  42 Mar  4 10:30 VTK -> /path/to/install/VTK-9.2.6
+lrwxr-xr-x  1 user  staff  55 Mar  4 10:30 ITK -> /path/to/install/InsightToolkit-5.3.0
+...
+```
+
+The `->` arrow shows where each link points.
+
+## Removing Old Links
+
+If you need to update library versions, first remove the old symbolic links:
+
+<Steps>
+  <Step title="Enable 'Remove Symbolic links'">
+    Run `./reconfigure.sh` and enable "Remove Symbolic links" instead of "Create Symbolic links"
+  </Step>
+  
+  <Step title="Run build script">
+    ```bash
+    ./build.sh
+    ```
+  </Step>
+  
+  <Step title="Create new links">
+    Follow the normal symlink creation process to create links to your updated libraries
+  </Step>
+</Steps>
+
+## Unzip Binaries
+
+The first time you create symbolic links, the script also unzips pre-compiled binaries included with Miele-LXIV:
+
+- Framework libraries
+- Additional resources
+- Configuration templates
+
+This is handled automatically when "Unzip binaries" is enabled in the configuration.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Binaries directory doesn't exist">
+    This means the Miele-LXIV source wasn't downloaded in Step 2. 
+    
+    - Verify you enabled "APP" in the Download sources menu
+    - Check that `$SRC/miele-easy-x.x.x` exists
+    - Re-run Step 2 if needed
+  </Accordion>
+  
+  <Accordion title="Symbolic link already exists">
+    If you see "File exists" errors:
+    
+    1. Run `./reconfigure.sh`
+    2. Enable "Remove Symbolic links"
+    3. Run `./build.sh`
+    4. Then follow the normal creation process
+  </Accordion>
+  
+  <Accordion title="Link points to wrong version">
+    This happens if you rebuilt libraries with different versions.
+    
+    - Remove the old links (see "Removing Old Links" above)
+    - Verify your `seed.conf` has the correct version set
+    - Create new links
+  </Accordion>
+</AccordionGroup>
+
+## Configuration Files
+
+The symlink creation step also initializes configuration files in the Miele-LXIV source:
+
+- `url.h` - Created from `url.in.h` template
+- `identity.conf` - Build identity configuration
+- `fixup-build-phase.sh` - Build phase helper script
+
+Edit these files to customize your Miele-LXIV installation.
+
+## Next Step
+
+<Card title="Step 5: Xcode Configuration" icon="arrow-right" href="/setup/step5-xcode">
+  With all libraries linked, perform the final manual Xcode project configuration.
+</Card>

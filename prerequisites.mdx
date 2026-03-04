@@ -1,0 +1,146 @@
+---
+title: Prerequisites
+description: Required tools and dependencies for Miele-LXIV Easy
+---
+
+Before using Miele-LXIV Easy, you need to install several prerequisite tools. These tools are essential for the configuration, downloading, and building processes.
+
+## Required Tools
+
+### kconfig-mconf
+
+This is an interactive configuration tool normally used in Linux systems to rebuild the kernel with custom configurations. Miele-LXIV Easy uses it because it creates configuration files that work seamlessly with shell scripts.
+
+<Note>
+kconfig-mconf provides the text-based menu interface you'll use to configure your build options.
+</Note>
+
+#### Installation via NuttX
+
+The recommended installation method is through the [NuttX](https://bitbucket.org/nuttx/) project:
+
+<Steps>
+  <Step title="Create NuttX directory">
+    ```bash
+    mkdir -p $SRC/nuttx
+    cd $SRC/nuttx
+    ```
+    
+    Replace `$SRC` with your sources directory path.
+  </Step>
+  
+  <Step title="Navigate to kconfig-frontends">
+    ```bash
+    cd $SRC/nuttx/tools/kconfig-frontends
+    ```
+  </Step>
+  
+  <Step title="Configure the build">
+    ```bash
+    ./configure --disable-shared --enable-static --disable-gconf --disable-qconf --disable-nconf --disable-utils
+    ```
+  </Step>
+  
+  <Step title="Build and install">
+    ```bash
+    make
+    sudo make install
+    ```
+  </Step>
+  
+  <Step title="Verify installation">
+    ```bash
+    which kconfig-mconf
+    ```
+    
+    This should return the path to the installed binary.
+  </Step>
+</Steps>
+
+#### Dependencies
+
+Before building kconfig-mconf, you may need to install these dependencies using Homebrew:
+
+```bash
+brew install gperf ncurses flex bison
+```
+
+<Warning>
+Alternatively, you can install kconfig-mconf from [sources](http://distortos.org/documentation/building-kconfig-frontends-linux/), but the NuttX method is more convenient.
+</Warning>
+
+### wget
+
+wget is used to download library sources from the internet.
+
+```bash
+brew install wget
+```
+
+<Note>
+The build script uses wget to download libraries from official sources and DICOM repositories.
+</Note>
+
+### cmake (Command-Line Tool)
+
+The command-line `cmake` utility is required for configuring and building most libraries.
+
+<Note>
+`CMake` (with capital C) is the GUI application, whereas `cmake` (lowercase) is the CLI utility that Miele-LXIV Easy needs.
+</Note>
+
+#### Check if cmake is installed
+
+First, verify if cmake is already available:
+
+```bash
+which cmake
+```
+
+If this doesn't return a path, you need to install it.
+
+#### Installation Options
+
+<CodeGroup>
+
+```bash Homebrew
+brew install cmake
+```
+
+```bash From GUI Package
+sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
+```
+
+</CodeGroup>
+
+<Note>
+If you have the CMake GUI application installed, the second method will make the command-line tool available system-wide.
+</Note>
+
+## Verification
+
+Before proceeding, verify all tools are properly installed:
+
+```bash
+# Check kconfig-mconf
+which kconfig-mconf
+
+# Check wget
+which wget
+
+# Check cmake
+which cmake
+cmake --version
+```
+
+<Warning>
+The `build.sh` script will check for kconfig-mconf and cmake at startup. If either is missing, the script will exit with an error message.
+</Warning>
+
+## Next Steps
+
+Once you have all the prerequisites installed, you're ready to download and set up Miele-LXIV Easy.
+
+<Card title="Installation" icon="download" href="/installation">
+  Download Miele-LXIV Easy and configure your environment
+</Card>

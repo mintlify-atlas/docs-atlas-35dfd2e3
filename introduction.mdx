@@ -1,0 +1,97 @@
+---
+title: Introduction
+description: Learn about Miele-LXIV Easy and how it helps configure the Miele-LXIV Xcode project
+---
+
+## What is Miele-LXIV Easy?
+
+Miele-LXIV Easy is a CLI build system designed to assist in setting up and configuring all dependencies for the [Miele-LXIV](https://github.com/bettar/miele-lxiv) project.
+
+<Note>
+The goal of this project is **NOT to build Miele-LXIV**, but to create and configure the Xcode project that builds Miele-LXIV.
+</Note>
+
+## How It Works
+
+Miele-LXIV Easy orchestrates the entire setup process through a 5-step workflow:
+
+<Steps>
+  <Step title="Once-only configuration">
+    Configure the basic setup using kconfig-mconf to define your directory structure and version set.
+  </Step>
+  
+  <Step title="Download sources">
+    Download all required medical imaging libraries and their dependencies from trusted sources.
+  </Step>
+  
+  <Step title="Build and install the toolkits">
+    Configure, build, and install all third-party libraries including DCMTK, VTK, ITK, OpenJPEG, and more.
+  </Step>
+  
+  <Step title="Create symbolic links">
+    Set up the `Binaries` directory of the Xcode project with symbolic links to the installed toolkits.
+  </Step>
+  
+  <Step title="Final Xcode workaround">
+    Apply manual fixups to complete the Xcode project configuration.
+  </Step>
+</Steps>
+
+## Directory Structure
+
+Miele-LXIV Easy uses three types of directories throughout the build process:
+
+<Card title="SRC - Sources Directory" icon="folder">
+  Where all the source files for libraries and dependencies are downloaded and stored.
+</Card>
+
+<Card title="BLD - Build Directory" icon="hammer">
+  Temporary location for intermediate build files. This directory can be safely removed after installation to reclaim disk space.
+</Card>
+
+<Card title="BIN - Install Directory" icon="box">
+  Where compiled libraries are installed. The Xcode project references third-party modules from this location.
+</Card>
+
+## The EASY_HOME Directory
+
+The directory where you download or clone Miele-LXIV Easy is referred to as `EASY_HOME`. This is your working directory and contains:
+
+- `build.sh` - The main build script that executes all steps
+- `reconfigure.sh` - Interactive configuration tool
+- `Kconfig-miele` - Configuration options
+- `seed.conf` - Your initial configuration (created during first run)
+- `steps.conf` - Current step selections
+
+<Warning>
+You must define the three top-level directories (SRC, BLD, BIN) during the initial configuration, or accept the suggested defaults.
+</Warning>
+
+## Key Technologies
+
+Miele-LXIV Easy leverages:
+
+- **kconfig-mconf** - Interactive configuration interface borrowed from Linux kernel development
+- **cmake** - Build system generator for cross-platform compilation
+- **wget** - Reliable file downloading from official sources
+
+The system downloads and builds essential medical imaging libraries including:
+
+- **DCMTK** - DICOM toolkit for medical imaging
+- **VTK** - Visualization Toolkit for 3D graphics
+- **ITK** - Insight Toolkit for image processing
+- **OpenJPEG** - JPEG 2000 codec
+- **Jasper** - Image codec library
+- Plus supporting libraries: OpenSSL, libxml2, libjpeg, libtiff, libpng, zlib, and more
+
+## Next Steps
+
+Before you begin using Miele-LXIV Easy, make sure you have all the required tools installed.
+
+<Card title="Prerequisites" icon="check" href="/prerequisites">
+  Review the required tools and installation instructions
+</Card>
+
+<Card title="Installation" icon="download" href="/installation">
+  Download Miele-LXIV Easy and set up your environment
+</Card>

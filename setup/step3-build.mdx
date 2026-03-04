@@ -1,0 +1,229 @@
+---
+title: "Step 3: Build and Install"
+description: Compile and install all third-party libraries and dependencies
+---
+
+## Overview
+
+Step 3 is the longest step in the setup process. It configures, compiles, and installs all the third-party libraries that Miele-LXIV depends on. The build process is fully automated but takes approximately one hour to complete.
+
+<Note>
+**Build Time**: Approximately **1 hour** on modern hardware. The exact time depends on your CPU and number of cores.
+</Note>
+
+## What Gets Built
+
+The build process compiles and installs each library in the correct dependency order:
+
+1. **libiconv** - Character encoding conversion
+2. **OpenSSL** - Cryptography library
+3. **libpng** - PNG image support
+4. **zlib** - Compression library
+5. **libxml2** - XML parsing
+6. **libjpeg** - JPEG image support
+7. **libtiff** - TIFF image support
+8. **VTK** - Visualization Toolkit (collapsed into single library)
+9. **ITK** - Insight Toolkit (collapsed into single library)
+10. **DCMTK** - DICOM Toolkit (collapsed into single library)
+11. **OpenJPEG** - JPEG 2000 support
+12. **Jasper** - Additional image format support
+13. **GLEW** - OpenGL extensions (optional)
+14. **GLM** - OpenGL mathematics (optional)
+
+## Running the Build
+
+<Steps>
+  <Step title="Open the configuration menu">
+    From your `$EASY_HOME` directory:
+    
+    ```bash
+    ./reconfigure.sh
+    ```
+  </Step>
+  
+  <Step title="Enable Configure, Build, and Install">
+    In the kconfig-mconf interface:
+    
+    1. **Disable** "Download sources" (if it's enabled - you've already downloaded everything)
+    2. **Enable** "Configure" - prepares build configurations
+    3. **Enable** "Build" - compiles the libraries
+    4. **Enable** "Install" - installs to your BIN directory
+    
+    ![Build configuration](/images/step3.png)
+  </Step>
+  
+  <Step title="Save and exit">
+    1. Select **Save**
+    2. Confirm with **Ok**
+    3. Select **Exit**
+    4. Confirm **Exit** again
+  </Step>
+  
+  <Step title="Start the build with logging">
+    Because this step takes a long time and generates significant output, it's recommended to capture everything to a log file:
+    
+    ```bash
+    script log/$(date +%Y%m%d_%H%M).txt
+    ./build.sh ; exit
+    ```
+    
+    This creates a timestamped log file in the `log/` directory that you can review later if needed.
+  </Step>
+</Steps>
+
+## Build Process Details
+
+### Configuration Phase
+
+For each library, the build system:
+
+- Runs CMake or configure scripts with appropriate flags
+- Sets up compiler options for macOS compatibility
+- Configures library dependencies
+- Specifies installation paths
+
+### Build Phase
+
+Libraries are compiled using:
+
+- Parallel compilation (`-j` flag using all CPU cores)
+- Release configuration
+- Static linking where appropriate
+- macOS deployment target settings
+
+### Install Phase
+
+Compiled libraries are installed to your configured `BIN` directory:
+
+```
+$BIN/
+├── dcmtk-3.6.x/
+│   ├── include/
+│   └── lib/
+├── VTK-9.x.x/
+│   ├── include/
+│   └── lib/
+├── InsightToolkit-5.x.x/
+│   ├── include/
+│   └── lib/
+└── [other libraries...]
+```
+
+## Monitoring Progress
+
+The build script outputs detailed progress information:
+
+```bash
+=== Configure library libpng
+=== Build library PNG
+=== Install library PNG
+=== Configure VTK
+=== Compile VTK
+=== Install VTK
+=== Collapse VTK into a single library
+...
+```
+
+<Info>
+The "collapse" steps combine multiple `.a` files into single libraries for VTK, ITK, and DCMTK, making them easier to link in Xcode.
+</Info>
+
+## Expected Output
+
+You'll see:
+
+- CMake configuration output
+- Compiler progress with percentage completion
+- Installation confirmations
+- Occasional warnings (usually safe to ignore)
+
+## Library Collapsing
+
+For the major toolkits (VTK, ITK, DCMTK), the build process creates consolidated libraries:
+
+- `libVTK.a` - Single VTK library from all VTK components
+- `libITK.a` - Single ITK library from all ITK components  
+- `libDCMTK.a` - Single DCMTK library from all DCMTK components
+
+This simplifies linking in the Xcode project.
+
+## Disk Space Requirements
+
+During the build:
+
+- **BLD directory**: ~10-15 GB (temporary build files)
+- **BIN directory**: ~3-5 GB (installed libraries)
+
+<Note>
+After the build completes successfully, you can safely delete the `BLD` directory to reclaim disk space. The Xcode project only needs the `BIN` directory.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Build fails with compiler errors">
+    Common causes:
+    
+    - Xcode Command Line Tools not installed or outdated
+    - Missing dependencies
+    - Incompatible macOS version
+    
+    Check the log file for specific error messages. The build script shows which library failed.
+  </Accordion>
+  
+  <Accordion title="Build runs out of disk space">
+    The build process requires significant temporary space. Free up disk space and restart from the failed library by:
+    
+    1. Running `./reconfigure.sh`
+    2. Disabling already-built libraries in the Build menu
+    3. Running `./build.sh` again
+  </Accordion>
+  
+  <Accordion title="OpenSSL build errors about EVP_PKEY_get_bits">
+    This can happen with conflicting OpenSSL versions from Homebrew. The build script includes commented-out commands to temporarily unlink OpenSSL 3 and use OpenSSL 1.1:
+    
+    Edit `build.sh` around line 577-582 and uncomment the brew link/unlink commands.
+  </Accordion>
+  
+  <Accordion title="Build is taking too long">
+    On older hardware, the build can take 2+ hours. The main time consumers are:
+    
+    - VTK: 20-30 minutes
+    - ITK: 20-30 minutes
+    - DCMTK: 10-15 minutes
+    
+    This is normal. Let it complete.
+  </Accordion>
+</AccordionGroup>
+
+## Verifying Success
+
+Check that libraries were installed:
+
+```bash
+ls -la $BIN
+```
+
+You should see directories for each library. Verify key libraries exist:
+
+```bash
+ls $BIN/dcmtk-*/lib/libDCMTK.a
+ls $BIN/VTK-*/lib/libVTK.a
+ls $BIN/InsightToolkit-*/lib/libITK.a
+```
+
+## Reclaiming Disk Space
+
+After successful build and install:
+
+```bash
+rm -rf $BLD
+```
+
+This removes ~10-15 GB of temporary build files that are no longer needed.
+
+## Next Step
+
+<Card title="Step 4: Create Symbolic Links" icon="arrow-right" href="/setup/step4-symlinks">
+  With all libraries compiled and installed, create symbolic links to make them accessible to the Xcode project.
+</Card>

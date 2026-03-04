@@ -1,0 +1,352 @@
+---
+title: "Step 5: Xcode Configuration"
+description: Final manual configuration steps for the Xcode project
+---
+
+## Overview
+
+While Steps 1-4 automate the build environment setup, Step 5 requires some manual configuration within Xcode itself. These steps ensure the Xcode project correctly references the compiled libraries and is configured for development.
+
+<Warning>
+This step involves manual changes to the Xcode project. Follow each instruction carefully to avoid build errors.
+</Warning>
+
+## Opening the Project
+
+<Steps>
+  <Step title="Locate the Xcode project">
+    The Xcode project is located in your Miele-LXIV source directory:
+    
+    ```bash
+    open $SRC/miele-easy-x.x.x/Miele_LXIV.xcodeproj
+    ```
+    
+    Replace `x.x.x` with your actual version number.
+  </Step>
+  
+  <Step title="Select the miele-lxiv scheme">
+    In Xcode's toolbar:
+    
+    1. Click the scheme dropdown (next to the Run/Stop buttons)
+    2. Select **"miele-lxiv"**
+    
+    ![Scheme selection](/images/scheme.png)
+  </Step>
+  
+  <Step title="Set build configuration to Development">
+    1. Go to **Product → Scheme → Edit Scheme...**
+    2. Select **"Run"** in the left sidebar
+    3. Go to the **"Info"** tab
+    4. Set **"Build Configuration"** to **"Development"**
+    5. Click **"Close"**
+    
+    <Info>
+    The Development configuration builds without sandboxing, making debugging easier.
+    </Info>
+  </Step>
+</Steps>
+
+## Update Dynamic Libraries
+
+The Xcode project needs to reference the correct versions of dynamic libraries from your `Binaries` directory.
+
+<Steps>
+  <Step title="Remove old library references">
+    In the Xcode project navigator, locate and **delete** the following 4 files (shown in red):
+    
+    - Old libpng dylib reference
+    - Old libtiff dylib reference  
+    - Old libjpeg dylib reference
+    - Old libcrypto dylib reference
+    
+    <Warning>
+    Only remove the **reference** (right-click → Delete → "Remove Reference"). Do NOT move to trash.
+    </Warning>
+    
+    ![Before updating dylibs](/images/update-dylib-before-8.4.png)
+  </Step>
+  
+  <Step title="Add updated libraries">
+    Drag and drop the following library files from Finder into your Xcode project:
+    
+    **For targets: miele-lxiv AND Decompress**
+    - `Binaries/libpng/lib/libpng16.16.37.0.dylib`
+    - `Binaries/libtiff/lib/libtiff.5.4.0.dylib`
+    
+    **For target: miele-lxiv only**
+    - `Binaries/libjpeg/lib/libjpeg.9.dylib`
+    - `Binaries/openssl-1.1.1d/lib/libcrypto.dylib`
+    
+    **For targets: miele-lxiv, MieleAPI, Decompress, DICOMPrint**
+    - `Binaries/libxml2/lib/libxml2.a`
+    
+    **For targets: miele-lxiv, MieleAPI, Decompress**
+    - `Binaries/zlib/lib/libz.a`
+    
+    **For target: DICOMPrint only**
+    - `Binaries/zlib/lib/libz.dylib`
+    
+    <Note>
+    When dragging files, Xcode will ask about target membership. Ensure you select the correct targets as listed above.
+    </Note>
+  </Step>
+  
+  <Step title="Verify the result">
+    After adding the libraries, your project should look like:
+    
+    ![After updating dylibs](/images/update-dylib-after-8.4.png)
+  </Step>
+  
+  <Step title="Verify bundle inclusion">
+    Make sure the dynamic libraries are included in the app bundle:
+    
+    1. Select the **miele-lxiv** target
+    2. Go to **Build Phases**
+    3. Expand **"Copy Files"** or **"Embed Frameworks"**
+    4. Verify the dylib files are listed
+    
+    ![Bundle inclusion](/images/update-dylib-in-bundle.png)
+  </Step>
+</Steps>
+
+## Fix Compiler Issues
+
+### Update MACOSX_DEPLOYMENT_TARGET
+
+<Steps>
+  <Step title="Change deployment target">
+    The project needs to target macOS 10.13 or later:
+    
+    1. Select the **Miele_LXIV** project in the navigator
+    2. For each target (miele-lxiv, MieleAPI, Decompress, DICOMPrint, etc.)
+    3. Go to **Build Settings**
+    4. Search for **"macOS Deployment Target"**
+    5. Change from **10.9** to **10.13**
+    
+    <Note>
+    You'll need to update this in approximately 8 places (once per target).
+    </Note>
+  </Step>
+</Steps>
+
+### Fix NSObject Parameter Initialization
+
+Modern Objective-C compilers require explicit observer parameters instead of using `self` as a class.
+
+<Steps>
+  <Step title="Edit WebPortal.h">
+    Change line 61 from:
+    
+    ```objc
+    +(void)initializeWebPortalClass;
+    ```
+    
+    to:
+    
+    ```objc
+    +(void)initializeWebPortalClass:(id)observer;
+    ```
+  </Step>
+  
+  <Step title="Edit WebPortal.mm">
+    Make the following changes:
+    
+    **Line 133** - Change:
+    ```objc
+    +(void)initialize
+    ```
+    to:
+    ```objc
+    +(void)initialize:(id)observer
+    ```
+    
+    **Line 138** - Change:
+    ```objc
+    addObserver:self
+    ```
+    to:
+    ```objc
+    addObserver:observer
+    ```
+    
+    **Line 142** - Change:
+    ```objc
+    +(void)initializeWebPortalClass
+    ```
+    to:
+    ```objc
+    +(void)initializeWebPortalClass:(id)observer
+    ```
+    
+    **Lines 143-157** - Change all instances of:
+    ```objc
+    addObserver:self
+    ```
+    to:
+    ```objc
+    addObserver:observer
+    ```
+  </Step>
+  
+  <Step title="Edit AppController.h">
+    Change line 61 from:
+    
+    ```objc
+    +(void)initializeDicomDatabaseClass;
+    ```
+    
+    to:
+    
+    ```objc
+    +(void)initializeDicomDatabaseClass:(id)observer;
+    ```
+  </Step>
+  
+  <Step title="Edit AppController.mm">
+    **Line 3529** - Change:
+    ```objc
+    [DicomDatabase initializeDicomDatabaseClass];
+    ```
+    to:
+    ```objc
+    [DicomDatabase initializeDicomDatabaseClass:self];
+    ```
+    
+    **Line 3532** - Change:
+    ```objc
+    [WebPortal initializeWebPortalClass];
+    ```
+    to:
+    ```objc
+    [WebPortal initializeWebPortalClass:self];
+    ```
+  </Step>
+  
+  <Step title="Edit DicomDatabase.h">
+    Change line 61 from:
+    
+    ```objc
+    +(void)initializeDicomDatabaseClass;
+    ```
+    
+    to:
+    
+    ```objc
+    +(void)initializeDicomDatabaseClass:(id)observer;
+    ```
+  </Step>
+  
+  <Step title="Edit DicomDatabase.mm">
+    **Line 91** - Change:
+    ```objc
+    +(void)initializeDicomDatabaseClass
+    ```
+    to:
+    ```objc
+    +(void)initializeDicomDatabaseClass:(id)observer
+    ```
+    
+    **Line 92** - Change:
+    ```objc
+    addObserver:self
+    ```
+    to:
+    ```objc
+    addObserver:observer
+    ```
+  </Step>
+</Steps>
+
+## Update Linker Flags
+
+Modern versions require additional WebP libraries:
+
+<Steps>
+  <Step title="Add libsharpyuv.a">
+    1. Select the **miele-lxiv** target
+    2. Go to **Build Settings**
+    3. Search for **"Other Linker Flags"**
+    4. Verify `/usr/local/lib/libwebp.a` is in the list
+    5. Add a new entry: `/usr/local/lib/libsharpyuv.a`
+  </Step>
+</Steps>
+
+## Additional Configuration (Optional)
+
+<AccordionGroup>
+  <Accordion title="GLEW Python Issue">
+    If you encountered a "python: command not found" error during GLEW setup:
+    
+    ```bash
+    ln -s /usr/local/bin/python3 /usr/local/bin/python
+    ```
+  </Accordion>
+  
+  <Accordion title="Verify miele-lxiv-lite.zip exists">
+    Ensure `Binaries/miele-lxiv-lite.zip` exists in the project. This is needed for certain build phases.
+  </Accordion>
+</AccordionGroup>
+
+## Build and Test
+
+<Steps>
+  <Step title="Clean the build folder">
+    In Xcode, go to **Product → Clean Build Folder** (or press Shift+Cmd+K)
+  </Step>
+  
+  <Step title="Build the project">
+    Go to **Product → Build** (or press Cmd+B)
+    
+    The build should complete without errors. Watch for warnings but they're usually not critical.
+  </Step>
+  
+  <Step title="Run the application">
+    Click the **Run** button or press Cmd+R to launch Miele-LXIV.
+    
+    <Info>
+    The Development build configuration runs without sandboxing, making it easier to test file access and debugging.
+    </Info>
+  </Step>
+</Steps>
+
+## Command Line Build (Alternative)
+
+You can also build from the command line:
+
+```bash
+xcodebuild -configuration Development -target miele-lxiv
+```
+
+The Development configuration builds an un-sandboxed version for easier development.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Library not found errors">
+    - Verify symbolic links in the Binaries directory point to the correct locations
+    - Check that you added the correct dylib versions (version numbers must match)
+    - Ensure target membership is set correctly for each library
+  </Accordion>
+  
+  <Accordion title="Compiler errors in WebPortal or DicomDatabase">
+    Double-check that you made ALL the observer parameter changes listed above. Missing even one will cause compiler errors.
+  </Accordion>
+  
+  <Accordion title="Linker errors about missing symbols">
+    - Ensure you added both `/usr/local/lib/libwebp.a` AND `/usr/local/lib/libsharpyuv.a` to Other Linker Flags
+    - Verify all the collapsed libraries (libDCMTK.a, libVTK.a, libITK.a) were created in Step 3
+  </Accordion>
+</AccordionGroup>
+
+## Conclusion
+
+Congratulations! You've successfully configured the Miele-LXIV Xcode project. You can now:
+
+- Build the application from Xcode
+- Make modifications to source files
+- Start your development cycle
+- Build from command line if preferred
+
+<Card title="Next: Development Workflow" icon="code" href="/setup/overview">
+  Learn about the typical development workflow for Miele-LXIV
+</Card>

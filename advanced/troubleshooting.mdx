@@ -1,0 +1,607 @@
+---
+title: Troubleshooting
+description: Common build issues and their solutions
+---
+
+## Overview
+
+This guide covers common problems encountered during the Miele-LXIV Easy build process and provides practical solutions. Build logs are stored in `log/` directory for detailed diagnostics.
+
+## Build Log Usage
+
+Always capture build output for troubleshooting:
+
+```bash
+mkdir -p log
+script log/$(date +%Y%m%d_%H%M).txt
+./build.sh ; exit
+```
+
+Logs help identify:
+- Missing dependencies
+- Configuration errors
+- Compilation failures
+- Linking problems
+
+## Common Issues
+
+<Accordion title="kconfig-mconf not found">
+  **Error message:**
+  ```
+  Please install kconfig-mconf
+  ```
+
+  **Cause:** The kconfig-mconf tool is not installed or not in PATH.
+
+  **Solution:**
+  
+  Install kconfig-mconf following the NuttX project method:
+
+  ```bash
+  # Install dependencies
+  brew install gperf ncurses flex bison
+
+  # Download and build kconfig-frontends
+  mkdir -p ~/src/nuttx/tools
+  cd ~/src/nuttx/tools
+  git clone https://bitbucket.org/nuttx/tools.git
+  cd tools/kconfig-frontends
+
+  # Configure and install
+  ./configure --disable-shared --enable-static \
+              --disable-gconf --disable-qconf \
+              --disable-nconf --disable-utils
+  make
+  sudo make install
+
+  # Verify installation
+  which kconfig-mconf
+  ```
+
+  **Verification:**
+  ```bash
+  kconfig-mconf --version
+  ```
+</Accordion>
+
+<Accordion title="cmake command not found">
+  **Error message:**
+  ```
+  Please install the command-line cmake
+  ```
+
+  **Cause:** The cmake CLI tool is not installed or not in PATH.
+
+  **Solution 1 - Install via Homebrew:**
+  ```bash
+  brew install cmake
+  which cmake  # Should show /usr/local/bin/cmake or /opt/homebrew/bin/cmake
+  ```
+
+  **Solution 2 - Install from CMake.app:**
+  ```bash
+  sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
+  ```
+
+  This creates symlinks in `/usr/local/bin/`:
+  - cmake
+  - ctest
+  - cpack
+  - cmake-gui
+
+  **Verification:**
+  ```bash
+  cmake --version
+  ```
+</Accordion>
+
+<Accordion title="Download fails with curl/wget errors">
+  **Error message:**
+  ```
+  curl: (6) Could not resolve host: dicom.offis.de
+  wget: unable to resolve host address
+  ```
+
+  **Cause:** Network connectivity issues or missing download tools.
+
+  **Solution 1 - Check network:**
+  ```bash
+  ping dicom.offis.de
+  ping github.com
+  ```
+
+  **Solution 2 - Install wget:**
+  ```bash
+  brew install wget
+  ```
+
+  **Solution 3 - Manual download:**
+  If automated download fails, download manually:
+  ```bash
+  cd $SRC
+  # Visit https://dicom.offis.de/dcmtk in browser
+  # Download dcmtk-3.6.5.tar.gz manually
+  tar -zxf dcmtk-3.6.5.tar.gz
+  ```
+
+  **Solution 4 - Use alternate sources:**
+  Some libraries have GitHub mirrors. Edit build.sh to use alternate URLs.
+</Accordion>
+
+<Accordion title="Patch fails to apply">
+  **Error message:**
+  ```
+  patching file dcmdata/libsrc/dcdatset.cc
+  Hunk #1 FAILED at 241.
+  1 out of 1 hunk FAILED -- saving rejects to file dcmdata/libsrc/dcdatset.cc.rej
+  ```
+
+  **Cause:** Library version mismatch - patch doesn't match the source code.
+
+  **Solution 1 - Verify versions match:**
+  ```bash
+  source seed.conf
+  source $CONFIG_VERSION_SET
+  echo "DCMTK version: $DCMTK_VERSION"
+  ls patch/dcmtk-*.patch
+  ```
+
+  Ensure patch filename matches library version exactly.
+
+  **Solution 2 - Use correct version set:**
+  ```bash
+  ./seed.sh
+  # Select the version set that matches available patches
+  # Default: version-set-8.8
+  ```
+
+  **Solution 3 - Create new patch:**
+  If using a newer library version, you'll need to create a new patch. See [Patching Dependencies](/advanced/patching).
+
+  **Diagnostic commands:**
+  ```bash
+  # Test patch without applying
+  cd $SRC_DCMTK
+  patch --dry-run -p1 -i $PATCH_DIR/dcmtk-3.6.5_miele-easy-8.4.62.patch
+
+  # View rejected hunks
+  cat dcmdata/libsrc/dcdatset.cc.rej
+  ```
+</Accordion>
+
+<Accordion title="OpenSSL version errors with DCMTK">
+  **Error message:**
+  ```
+  Undefined symbols for architecture arm64:
+    "_EVP_PKEY_get_bits", referenced from:
+        DcmTLSTransportLayer::setCertificateFromFile() in libdcmtls.a
+  ```
+
+  **Cause:** DCMTK compiled against OpenSSL 1.1.x but system has OpenSSL 3.x linked via Homebrew.
+
+  **Solution - Temporarily switch OpenSSL versions:**
+  
+  Edit build.sh and uncomment lines 577-582 during DCMTK compilation:
+
+  ```bash
+  # In build.sh STEP_COMPILE_DCMTK section:
+  brew unlink openssl@3
+  brew link openssl@1.1
+  make $MAKE_FLAGS
+  brew unlink openssl@1.1
+  brew link openssl@3
+  ```
+
+  **Alternative - Use OpenSSL 1.1.x consistently:**
+  ```bash
+  # In version set file:
+  OPENSSL_VERSION=1.1.1w  # Use latest 1.1.x
+
+  # Ensure Homebrew has OpenSSL 1.1:
+  brew install openssl@1.1
+  ```
+
+  **Verification:**
+  ```bash
+  openssl version
+  # Should show: OpenSSL 1.1.1w
+  ```
+</Accordion>
+
+<Accordion title="Python symlink issues with GLEW">
+  **Error message:**
+  ```
+  make[1]: python: No such file or directory
+  make[1]: *** [extensions] Error 1
+  ```
+
+  **Cause:** GLEW's auto/make process requires `python` command, but macOS only provides `python3`.
+
+  **Solution 1 - Create symlink:**
+  ```bash
+  # Check if python3 exists
+  which python3
+
+  # Create symlink (if not exists)
+  sudo ln -s $(which python3) /usr/local/bin/python
+  ```
+
+  **Solution 2 - Use Homebrew Python:**
+  ```bash
+  brew install python
+  # Homebrew creates python symlink automatically
+  ```
+
+  **Solution 3 - Edit GLEW Makefile:**
+  ```bash
+  cd $SRC_GLEW/auto
+  # Edit Makefile, replace 'python' with 'python3'
+  sed -i '' 's/python /python3 /g' Makefile
+  make
+  ```
+
+  **Verification:**
+  ```bash
+  python --version
+  # Should work without error
+  ```
+</Accordion>
+
+<Accordion title="Permission denied errors">
+  **Error message:**
+  ```
+  mkdir: /usr/local/miele-bin: Permission denied
+  make: *** [install] Error 1
+  ```
+
+  **Cause:** Trying to install to system directories without proper permissions.
+
+  **Solution 1 - Use user directories:**
+  ```bash
+  ./seed.sh
+  # Configure directories:
+  # SRC: ~/src
+  # BLD: ~/build
+  # BIN: ~/miele-bin
+  ```
+
+  All directories should be under your home directory.
+
+  **Solution 2 - Fix existing directory permissions:**
+  ```bash
+  # If directory exists but has wrong permissions
+  sudo chown -R $(whoami) /usr/local/miele-bin
+  ```
+
+  **Solution 3 - Create directories first:**
+  ```bash
+  mkdir -p ~/src ~/build ~/miele-bin
+  ```
+
+  **Best practice:** Always use directories under `$HOME` to avoid permission issues.
+</Accordion>
+
+<Accordion title="Build fails with 'No rule to make target'">
+  **Error message:**
+  ```
+  make: *** No rule to make target 'install'.  Stop.
+  ```
+
+  **Cause:** Configuration step was skipped or failed.
+
+  **Solution:**
+  ```bash
+  # Clean and reconfigure
+  cd $BLD/dcmtk-3.6.5
+  rm -f CMakeCache.txt
+
+  # Reconfigure
+  ./reconfigure.sh
+  # Enable: Configure → DCMTK
+  # Enable: Build → DCMTK
+
+  ./build.sh
+  ```
+
+  **Diagnostic commands:**
+  ```bash
+  # Check if CMakeCache.txt exists
+  ls $BLD/dcmtk-3.6.5/CMakeCache.txt
+
+  # Check if Makefile exists
+  ls $BLD/dcmtk-3.6.5/Makefile
+  ```
+</Accordion>
+
+<Accordion title="Out of disk space">
+  **Error message:**
+  ```
+  No space left on device
+  ```
+
+  **Cause:** Build and source directories consume significant space (20-30GB).
+
+  **Solution 1 - Check disk space:**
+  ```bash
+  df -h
+  du -sh ~/src ~/build ~/miele-bin
+  ```
+
+  **Solution 2 - Clean build directory:**
+  ```bash
+  # Remove intermediate build files (can be regenerated)
+  rm -rf ~/build/*
+  ```
+
+  **Solution 3 - Use shared sources:**
+  ```bash
+  ./seed.sh
+  # Enable: "Share source directories among projects"
+  ```
+
+  This reduces duplication if building multiple times.
+
+  **Solution 4 - Remove old timestamped builds:**
+  ```bash
+  # List timestamped directories
+  ls -d ~/src/miele-easy-*
+
+  # Remove old builds (keep most recent)
+  rm -rf ~/src/miele-easy-20240101_*
+  ```
+</Accordion>
+
+<Accordion title="Xcode build fails after dependencies built">
+  **Error message:**
+  ```
+  fatal error: 'dcmtk/config/osconfig.h' file not found
+  ```
+
+  **Cause:** Symbolic links not created or Xcode project not finding libraries.
+
+  **Solution 1 - Create symbolic links:**
+  ```bash
+  ./reconfigure.sh
+  # Enable: Create Symbolic links
+  # Enable all sub-options
+
+  ./build.sh
+  ```
+
+  **Solution 2 - Verify symlinks:**
+  ```bash
+  ls -la $SRC_APP/Binaries/
+  # Should show symlinks to all installed libraries
+  ```
+
+  **Solution 3 - Complete STEP 5:**
+  Follow the manual fixup steps in README.md STEP 5. Some Xcode project settings require manual configuration.
+
+  **Diagnostic commands:**
+  ```bash
+  # Check symlink targets exist
+  ls -la $(readlink $SRC_APP/Binaries/DCMTK)
+  ```
+</Accordion>
+
+<Accordion title="Library version mismatch errors">
+  **Error message:**
+  ```
+  undefined reference to 'vtkRenderingCore_9_2'
+  expected 'vtkRenderingCore_9_0'
+  ```
+
+  **Cause:** Mixed library versions - dependencies built with different versions than expected.
+
+  **Solution 1 - Use consistent version set:**
+  ```bash
+  ./seed.sh
+  # Ensure all settings use the same version set
+  # Don't mix libraries from different version sets
+  ```
+
+  **Solution 2 - Rebuild all dependencies:**
+  ```bash
+  # Clean everything
+  rm -rf ~/build/*
+  rm -rf ~/miele-bin/*
+  rm -rf ~/src/miele-easy-*
+
+  # Rebuild from scratch
+  ./reconfigure.sh
+  # Enable: Download, Configure, Build, Install
+  ./build.sh
+  ```
+
+  **Prevention:** Always build all dependencies together from the same version set.
+</Accordion>
+
+<Accordion title="CMake generator errors">
+  **Error message:**
+  ```
+  CMake Error: Could not create named generator Xcode
+  ```
+
+  **Cause:** Xcode or Xcode Command Line Tools not installed.
+
+  **Solution 1 - Install Xcode:**
+  ```bash
+  # Install from Mac App Store
+  # Then install command line tools:
+  xcode-select --install
+  ```
+
+  **Solution 2 - Accept Xcode license:**
+  ```bash
+  sudo xcodebuild -license accept
+  ```
+
+  **Solution 3 - Switch to Unix Makefiles:**
+  ```bash
+  ./seed.sh
+  # Select: Generator → Unix Makefiles
+  ```
+
+  **Verification:**
+  ```bash
+  xcode-select -p
+  # Should show: /Applications/Xcode.app/Contents/Developer
+  ```
+</Accordion>
+
+<Accordion title="gsort command not found">
+  **Error message:**
+  ```
+  build.sh: line 132: gsort: command not found
+  ```
+
+  **Cause:** GNU sort (gsort) required for macOS 10.15+, but not installed.
+
+  **Solution:**
+  ```bash
+  brew install coreutils
+  ```
+
+  This installs GNU utilities including `gsort`.
+
+  **Background:** build.sh:128-133 uses `gsort` for version comparison on macOS 10.15+, but falls back to `sort` on older versions.
+
+  **Verification:**
+  ```bash
+  which gsort
+  gsort --version
+  ```
+</Accordion>
+
+## Diagnostic Commands
+
+### Check Environment
+
+```bash
+# Verify all paths
+source seed.conf
+source $CONFIG_VERSION_SET
+echo "SRC: $SRC"
+echo "BLD: $BLD"
+echo "BIN: $BIN"
+echo "TIMESTAMP: $TIMESTAMP"
+```
+
+### Check Configuration
+
+```bash
+# View current settings
+cat seed.conf
+cat steps.conf
+cat $CONFIG_VERSION_SET
+```
+
+### Check Build Status
+
+```bash
+# List installed libraries
+ls -la $BIN/
+
+# Check specific library
+ls -la $BIN/dcmtk-3.6.5/lib/
+ls -la $BIN/dcmtk-3.6.5/include/
+```
+
+### Check Source Downloads
+
+```bash
+# List downloaded sources
+ls -la $SRC/
+
+# Check if patches applied (look for .orig files)
+find $SRC_DCMTK -name "*.orig" | head -5
+```
+
+### Check Symbolic Links
+
+```bash
+# Verify all symlinks in Binaries directory
+ls -la $SRC_APP/Binaries/
+
+# Check symlink target
+readlink $SRC_APP/Binaries/DCMTK
+
+# Verify target exists
+ls -la $(readlink $SRC_APP/Binaries/DCMTK)
+```
+
+## Getting Help
+
+### Useful Information to Provide
+
+When seeking help, include:
+
+1. **System information:**
+   ```bash
+   sw_vers
+   uname -m
+   xcode-select -p
+   ```
+
+2. **Build configuration:**
+   ```bash
+   cat seed.conf
+   source seed.conf
+   echo $CONFIG_VERSION_SET
+   ```
+
+3. **Error messages:** From build log
+   ```bash
+   tail -100 log/20240101_1530.txt
+   ```
+
+4. **Steps attempted:** What you've already tried
+
+### Resources
+
+- **Miele-LXIV GitHub**: [https://github.com/bettar/miele-lxiv](https://github.com/bettar/miele-lxiv)
+- **Build logs**: Check `$EASY_HOME/log/` directory
+- **Source comments**: build.sh contains helpful inline documentation
+
+## Prevention Tips
+
+1. **Always use build logs** - Capture output with `script` command
+2. **Build incrementally** - Test one library at a time when troubleshooting
+3. **Keep backups** - Save working configurations before experimenting
+4. **Use default settings** - Start with version-set-8.8 before customizing
+5. **Check prerequisites** - Verify all tools installed before starting
+6. **Monitor disk space** - Ensure 30GB+ available before building
+7. **Read error messages** - They often indicate exactly what's wrong
+8. **Follow build order** - Don't skip configure/build/install steps
+
+## Clean Build Procedure
+
+If all else fails, start fresh:
+
+```bash
+# 1. Remove all generated files
+rm seed.conf steps.conf
+rm -rf log/*
+
+# 2. Clean build artifacts
+rm -rf ~/build/miele-easy-*
+rm -rf ~/miele-bin/miele-easy-*
+
+# 3. Optionally remove sources (will re-download)
+rm -rf ~/src/miele-easy-*
+
+# 4. Start configuration from scratch
+./build.sh  # Creates seed.conf
+./seed.sh   # Configure settings
+
+# 5. Download
+./reconfigure.sh
+# Enable: Download sources
+./build.sh
+
+# 6. Build
+./reconfigure.sh  
+# Enable: Configure, Build, Install
+script log/$(date +%Y%m%d_%H%M).txt
+./build.sh ; exit
+```
