@@ -76,6 +76,7 @@
           {
             "group": "Commands",
             "pages": [
+              "reference/seed-script",
               "reference/build-script",
               "reference/reconfigure-script"
             ]

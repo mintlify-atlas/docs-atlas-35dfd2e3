@@ -1,0 +1,191 @@
+---
+title: seed.sh Reference
+description: Reference for the initial setup script that creates the seed configuration
+---
+
+## Overview
+
+The `seed.sh` script is the initial setup script that runs before `build.sh` and `reconfigure.sh`. It creates the `seed.conf` configuration file by launching an interactive menu to set up the basic directory structure and version set selection.
+
+## Usage
+
+```bash
+./seed.sh
+```
+
+This script is automatically invoked the first time you run `build.sh` if `seed.conf` doesn't exist yet.
+
+## Script Contents
+
+```bash seed.sh:1-23
+#!/bin/bash
+
+# Alex Bettarini - 17 Mar 2019
+
+#-------------------------------------------------------------------------------
+# Once only, create symbolic links to patches to be reused
+
+PATCH_FILE1a=openjpeg-2.2.0_miele-7.1.38.patch
+PATCH_FILE1b=openjpeg-2.2.0_miele-7.3.46.patch
+
+pushd patch
+
+if [ ! -f ${PATCH_FILE1b} ]; then
+    ln -s ${PATCH_FILE1a} ${PATCH_FILE1b}
+fi
+
+popd
+
+#-------------------------------------------------------------------------------
+export CONFIG_=CONFIG_
+export KCONFIG_CONFIG=seed.conf
+kconfig-mconf Kconfig-seed
+```
+
+## How It Works
+
+### 1. Setup Patch Symlinks
+
+```bash
+pushd patch
+
+if [ ! -f ${PATCH_FILE1b} ]; then
+    ln -s ${PATCH_FILE1a} ${PATCH_FILE1b}
+fi
+
+popd
+```
+
+The script first creates symbolic links for patch file reuse. This allows version 7.3.46 to reuse the OpenJPEG patch from version 7.1.38 when they are compatible.
+
+### 2. Set Configuration Prefix
+
+```bash
+export CONFIG_=CONFIG_
+```
+
+Sets the Kconfig variable prefix to `CONFIG_`, so menu options like `VERSION_SET` become `CONFIG_VERSION_SET` in the output file.
+
+### 3. Set Configuration File
+
+```bash
+export KCONFIG_CONFIG=seed.conf
+```
+
+Specifies that configuration values should be saved to `seed.conf` in the project root.
+
+### 4. Launch Interactive Menu
+
+```bash
+kconfig-mconf Kconfig-seed
+```
+
+Launches the interactive configuration menu using the structure defined in `Kconfig-seed`.
+
+## Interactive Menu
+
+When you run `seed.sh` (or when `build.sh` runs it automatically), you'll see:
+
+```
+┌─── Miele-LXIV - Once-only configuration ───┐
+│                                             │
+│  version numbers (version-set-8.8.conf)    │
+│  sources directory (~/Downloads/source)     │
+│  build directory (~/Documents/temp/build)   │
+│  install directory (~/Applications)         │
+│  CMake generator (makefiles, Xcode)         │
+│  [ ] Reuse available sources               │
+│                                             │
+│          <Select>    < Exit >    < Help >   │
+└─────────────────────────────────────────────┘
+```
+
+### Configuration Options
+
+The menu allows you to configure:
+
+<ParamField path="version numbers" type="string" default="version-set-8.8.conf">
+  Select which version set file to use (7.1.38, 7.3.46, or 8.8). This determines the library versions that will be built.
+</ParamField>
+
+<ParamField path="sources directory" type="path" default="~/Downloads/source">
+  Where source code will be downloaded (SRC directory)
+</ParamField>
+
+<ParamField path="build directory" type="path" default="~/Documents/temp/build">
+  Where intermediate build files will be stored (BLD directory)
+</ParamField>
+
+<ParamField path="install directory" type="path" default="~/Applications">
+  Where compiled libraries will be installed (BIN directory)
+</ParamField>
+
+<ParamField path="CMake generator" type="choice" default="makefiles">
+  Choose between Unix Makefiles or Xcode project generation. Most users should select **makefiles**.
+</ParamField>
+
+<ParamField path="Reuse available sources" type="boolean" default="false">
+  If enabled, non-patched packages are stored in a shared parent directory to avoid re-downloading for multiple projects. Patched packages (DCMTK, OpenJPEG, miele-lxiv) are always stored separately.
+</ParamField>
+
+## Output File
+
+The script creates `seed.conf` with content like:
+
+```bash
+CONFIG_VERSION_SET="version-set-8.8.conf"
+CONFIG_SRC_DIR="~/Downloads/source"
+CONFIG_BLD_DIR="~/Documents/temp/build"
+CONFIG_BIN_DIR="~/Applications"
+CONFIG_GENERATOR_MK=y
+# CONFIG_GENERATOR_XC is not set
+# CONFIG_SHARED_SOURCES is not set
+```
+
+<Info>
+The `seed.conf` file is read by `build.sh` to determine directory paths and the version set to use.
+</Info>
+
+## When Is It Run?
+
+The `seed.sh` script runs in these scenarios:
+
+1. **Explicitly**: When you run `./seed.sh` directly
+2. **Automatically**: When `build.sh` detects that `seed.conf` doesn't exist
+3. **Reconfiguration**: When you need to change directories or version sets
+
+<Warning>
+If you want to change your directory structure or version set after initial setup, you can delete `seed.conf` and run `./build.sh` again, or run `./seed.sh` directly.
+</Warning>
+
+## Common Workflows
+
+### Initial Setup
+
+```bash
+cd $EASY_HOME
+./build.sh  # Will automatically run seed.sh if seed.conf doesn't exist
+```
+
+### Change Version Set
+
+```bash
+./seed.sh  # Select different version set
+# Update version-set in the menu
+# Save and exit
+./build.sh  # Build with new version set
+```
+
+### Change Directories
+
+```bash
+rm seed.conf  # Remove existing configuration
+./seed.sh     # Configure new directories
+```
+
+## See Also
+
+- [seed.conf Reference](/reference/seed-conf) - Details on the seed.conf file format
+- [Kconfig Reference](/reference/kconfig) - Understanding the Kconfig-seed menu structure  
+- [Directory Structure](/configuration/directories) - How SRC, BLD, and BIN directories are organized
+- [Version Sets](/configuration/version-sets) - Available version set options
